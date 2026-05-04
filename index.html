@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sıkıştırma Algoritmaları</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Algoritma Görselleştirici</h1>
+            <p>Metin Sıkıştırma Simülasyonu</p>
+        </header>
+
+        <!-- Sekme Butonları -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="openTab('huffman')">Huffman Encoding</button>
+            <button class="tab-btn" onclick="openTab('lzw')">LZW Encoding</button>
+        </div>
+
+        <!-- Huffman Bölümü -->
+        <div id="huffman" class="tab-content active">
+            <div class="panel">
+                <h2>Huffman Encoding</h2>
+                <div class="input-group">
+                    <textarea id="huffman-input" placeholder="Sıkıştırılacak metni girin..."></textarea>
+                    <button class="action-btn" id="btn-huffman">Adım Adım Görselleştir</button>
+                </div>
+                
+                <div class="results">
+                    <div class="text-result">
+                        <h3>Kodlanmış Çıktı:</h3>
+                        <div class="output-box" id="huffman-output">Henüz bir işlem yapılmadı.</div>
+                    </div>
+                    <div class="visual-result">
+                        <h3>Huffman Ağacı:</h3>
+                        <!-- Hoca ağacı isteyeceği için burayı geniş tuttuk, ileride buraya Canvas veya SVG çizeceğiz -->
+                        <div class="canvas-container" id="huffman-tree-container">
+                            <span class="placeholder">Ağaç görseli burada oluşturulacak...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LZW Bölümü -->
+        <div id="lzw" class="tab-content">
+            <div class="panel">
+                <h2>LZW Encoding</h2>
+                <div class="input-group">
+                    <textarea id="lzw-input" placeholder="Sıkıştırılacak metni girin..."></textarea>
+                    <button class="action-btn" id="btn-lzw">Adım Adım Görselleştir</button>
+                </div>
+                
+                <div class="results">
+                    <div class="text-result">
+                        <h3>Çıktı Dizisi:</h3>
+                        <div class="output-box" id="lzw-output">Henüz bir işlem yapılmadı.</div>
+                    </div>
+                    <div class="visual-result">
+                        <h3>Sözlük (Dictionary) Tablosu:</h3>
+                        <!-- LZW için tablo yapısı eklenecek -->
+                        <div class="table-container" id="lzw-dict-container">
+                            <span class="placeholder">LZW adımları ve sözlük burada tablo olarak gösterilecek...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
