@@ -1,75 +1,1069 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sıkıştırma Algoritmaları</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Huffman Algoritması Görselleştirici</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+        min-height: 100vh;
+        background: #f4f7f6;
+        color: #263645;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1180px;
+        margin: 0 auto;
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      header {
+        background: linear-gradient(135deg, #24313d, #34495e);
+        color: white;
+        text-align: center;
+        padding: 26px 18px;
+      }
+
+      header h1 {
+        font-size: 26px;
+        margin-bottom: 8px;
+      }
+
+      header p {
+        font-size: 14px;
+        opacity: 0.86;
+      }
+
+      main {
+        padding: 28px;
+      }
+
+      .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        margin-bottom: 26px;
+      }
+
+      label {
+        font-weight: 800;
+        color: #2c3e50;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 118px;
+        padding: 15px;
+        border: 1px solid #cfd8dc;
+        border-radius: 9px;
+        resize: vertical;
+        font-size: 15px;
+        line-height: 1.45;
+        outline: none;
+        transition:
+          border 0.2s,
+          box-shadow 0.2s;
+      }
+
+      textarea:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.16);
+      }
+
+      .button-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .action-btn {
+        border: none;
+        border-radius: 8px;
+        padding: 12px 20px;
+        font-size: 15px;
+        font-weight: 800;
+        cursor: pointer;
+        color: white;
+        background: #27ae60;
+        transition:
+          transform 0.15s,
+          background 0.2s,
+          opacity 0.2s;
+      }
+
+      .action-btn:hover:not(:disabled) {
+        background: #219150;
+        transform: translateY(-1px);
+      }
+
+      .action-btn.secondary {
+        background: #3498db;
+      }
+
+      .action-btn.secondary:hover:not(:disabled) {
+        background: #287db5;
+      }
+
+      .action-btn.light {
+        background: #7f8c8d;
+      }
+
+      .action-btn.light:hover:not(:disabled) {
+        background: #697677;
+      }
+
+      .action-btn:disabled {
+        opacity: 0.48;
+        cursor: not-allowed;
+      }
+
+      .results {
+        display: none;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .section-card {
+        border: 1px solid #e4eaee;
+        border-radius: 12px;
+        background: #fff;
+        padding: 18px;
+      }
+
+      h2 {
+        font-size: 22px;
+        margin-bottom: 14px;
+        color: #2c3e50;
+      }
+
+      h3 {
+        font-size: 18px;
+        margin-bottom: 14px;
+        color: #2c3e50;
+        border-bottom: 2px solid #ecf0f1;
+        padding-bottom: 8px;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+        padding: 14px;
+        background: #ecf0f1;
+        border-radius: 9px;
+      }
+
+      #step-counter {
+        font-weight: 900;
+        font-size: 15px;
+        color: #2c3e50;
+        min-width: 128px;
+        text-align: center;
+      }
+
+      .step-note {
+        margin-bottom: 14px;
+        padding: 13px 15px;
+        border-left: 5px solid #3498db;
+        border-radius: 8px;
+        background: #edf7ff;
+        color: #24435c;
+        line-height: 1.5;
+        font-weight: 600;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 14px;
+        color: #566573;
+        font-size: 13px;
+      }
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .legend-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        display: inline-block;
+        border: 2px solid #2c3e50;
+      }
+
+      .legend-dot.selected {
+        background: #e74c3c;
+        border-color: #c0392b;
+      }
+
+      .legend-dot.parent {
+        background: #2ecc71;
+        border-color: #1e8449;
+      }
+
+      .legend-line {
+        width: 28px;
+        height: 0;
+        display: inline-block;
+        border-top: 3px solid #7f8c8d;
+      }
+
+      .legend-line.dashed {
+        border-top-style: dashed;
+        opacity: 0.7;
+      }
+
+      .visual-scroll {
+        width: 100%;
+        min-height: 390px;
+        overflow: auto;
+        border: 2px dashed #bdc3c7;
+        border-radius: 10px;
+        background: #fbfcfc;
+      }
+
+      #huffman-svg {
+        display: block;
+        min-width: 100%;
+      }
+
+      .row-label {
+        fill: #7f8c8d;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .node-rect {
+        fill: #3498db;
+        stroke: #2c3e50;
+        stroke-width: 2;
+      }
+
+      .node-rect.internal {
+        fill: #2ecc71;
+      }
+
+      .node-rect.selected {
+        fill: #e74c3c;
+        stroke: #c0392b;
+        stroke-width: 4;
+      }
+
+      .node-rect.new-parent {
+        stroke: #1e8449;
+        stroke-width: 4;
+      }
+
+      .node-text {
+        fill: white;
+        font-size: 15px;
+        font-weight: 900;
+        text-anchor: middle;
+        dominant-baseline: middle;
+      }
+
+      .merge-line {
+        stroke: #7f8c8d;
+        stroke-width: 3;
+        fill: none;
+      }
+
+      .merge-line.active {
+        stroke: #e74c3c;
+        stroke-width: 4;
+      }
+
+      .carry-line {
+        stroke: #95a5a6;
+        stroke-width: 2;
+        stroke-dasharray: 7 6;
+        opacity: 0.65;
+        fill: none;
+      }
+
+      .bit-label {
+        fill: #d35400;
+        font-size: 15px;
+        font-weight: 900;
+        paint-order: stroke;
+        stroke: #ffffff;
+        stroke-width: 4px;
+        stroke-linejoin: round;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .summary-card {
+        border: 1px solid #dfe7ec;
+        border-radius: 11px;
+        padding: 15px;
+        background: #f8fafb;
+        text-align: center;
+      }
+
+      .summary-title {
+        color: #6c7a86;
+        font-weight: 800;
+        font-size: 13px;
+        margin-bottom: 8px;
+      }
+
+      .summary-value {
+        color: #2c3e50;
+        font-weight: 900;
+        font-size: 22px;
+      }
+
+      .summary-footnote {
+        margin-top: 12px;
+        color: #667681;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .table-wrap {
+        width: 100%;
+        overflow-x: auto;
+      }
+
+      .huffman-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        min-width: 540px;
+      }
+
+      .huffman-table th,
+      .huffman-table td {
+        border: 1px solid #d8e0e4;
+        padding: 10px 11px;
+        text-align: center;
+        vertical-align: middle;
+      }
+
+      .huffman-table th {
+        background: #2c3e50;
+        color: white;
+        font-weight: 800;
+      }
+
+      .huffman-table tr:nth-child(even) td {
+        background: #f8fafb;
+      }
+
+      .huffman-table tr:hover td {
+        background: #edf7ff;
+      }
+
+      .code-cell {
+        font-family: Consolas, Monaco, monospace;
+        font-weight: 900;
+        letter-spacing: 0.7px;
+      }
+
+      .placeholder {
+        color: #95a5a6;
+        font-style: italic;
+        text-align: center;
+        padding: 38px 15px;
+      }
+
+      @media (max-width: 780px) {
+        body {
+          padding: 10px;
+        }
+
+        main {
+          padding: 18px;
+        }
+
+        .summary-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 520px) {
+        .summary-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .controls .action-btn {
+          width: 100%;
+        }
+
+        #step-counter {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
     <div class="container">
-        <header>
-            <h1>Algoritma Görselleştirici</h1>
-            <p>Metin Sıkıştırma Simülasyonu</p>
-        </header>
+      <header>
+        <h1>Huffman Algoritması Görselleştirici</h1>
+        <p>
+          Node'lar her satırda küçükten büyüğe sıralanır; en küçük iki node
+          seçilip üst satırda yeni toplam node oluşturulur.
+        </p>
+      </header>
 
-        <!-- Sekme Butonları -->
-        <div class="tabs">
-            <button class="tab-btn active" onclick="openTab('huffman')">Huffman Encoding</button>
-            <button class="tab-btn" onclick="openTab('lzw')">LZW Encoding</button>
+      <main>
+        <div class="input-group">
+          <label for="huffman-input">Sıkıştırılacak metin</label>
+          <textarea
+            id="huffman-input"
+            placeholder="Metni girin... Örnek frekans için: AAABBBBCCCCCDDDDDD"
+          ></textarea>
+          <div class="button-row">
+            <button class="action-btn" id="btn-huffman">
+              Huffman'ı Oluştur
+            </button>
+            <button class="action-btn light" id="btn-clear">Temizle</button>
+          </div>
         </div>
 
-        <!-- Huffman Bölümü -->
-        <div id="huffman" class="tab-content active">
-            <div class="panel">
-                <h2>Huffman Encoding</h2>
-                <div class="input-group">
-                    <textarea id="huffman-input" placeholder="Sıkıştırılacak metni girin..."></textarea>
-                    <button class="action-btn" id="btn-huffman">Adım Adım Görselleştir</button>
-                </div>
-                
-                <div class="results">
-                    <div class="text-result">
-                        <h3>Kodlanmış Çıktı:</h3>
-                        <div class="output-box" id="huffman-output">Henüz bir işlem yapılmadı.</div>
-                    </div>
-                    <div class="visual-result">
-                        <h3>Huffman Ağacı:</h3>
-                        <!-- Hoca ağacı isteyeceği için burayı geniş tuttuk, ileride buraya Canvas veya SVG çizeceğiz -->
-                        <div class="canvas-container" id="huffman-tree-container">
-                            <span class="placeholder">Ağaç görseli burada oluşturulacak...</span>
-                        </div>
-                    </div>
-                </div>
+        <div class="results" id="results">
+          <section class="section-card">
+            <h3>Huffman Oluşturma Tablosu</h3>
+            <div class="controls" id="huffman-controls">
+              <button id="btn-first" class="action-btn secondary">
+                İlk Adım
+              </button>
+              <button id="btn-prev" class="action-btn secondary">
+                ◀ Önceki
+              </button>
+              <span id="step-counter">Adım: 0 / 0</span>
+              <button id="btn-next" class="action-btn secondary">
+                Sonraki ▶
+              </button>
+              <button id="btn-play" class="action-btn">Otomatik Oynat</button>
             </div>
-        </div>
 
-        <!-- LZW Bölümü -->
-        <div id="lzw" class="tab-content">
-            <div class="panel">
-                <h2>LZW Encoding</h2>
-                <div class="input-group">
-                    <textarea id="lzw-input" placeholder="Sıkıştırılacak metni girin..."></textarea>
-                    <button class="action-btn" id="btn-lzw">Adım Adım Görselleştir</button>
-                </div>
-                
-                <div class="results">
-                    <div class="text-result">
-                        <h3>Çıktı Dizisi:</h3>
-                        <div class="output-box" id="lzw-output">Henüz bir işlem yapılmadı.</div>
-                    </div>
-                    <div class="visual-result">
-                        <h3>Sözlük (Dictionary) Tablosu:</h3>
-                        <!-- LZW için tablo yapısı eklenecek -->
-                        <div class="table-container" id="lzw-dict-container">
-                            <span class="placeholder">LZW adımları ve sözlük burada tablo olarak gösterilecek...</span>
-                        </div>
-                    </div>
-                </div>
+            <div class="step-note" id="step-note">
+              Metin girilip hesaplandığında Huffman oluşturma tablosu burada
+              gösterilecek.
             </div>
+
+            <div class="legend">
+              <span class="legend-item"
+                ><span class="legend-dot selected"></span>Seçilen en küçük iki
+                node</span
+              >
+              <span class="legend-item"
+                ><span class="legend-dot parent"></span>Yeni oluşan toplam
+                node</span
+              >
+              <span class="legend-item"
+                ><span class="legend-line"></span>0 / 1 Huffman bağlantısı</span
+              >
+              <span class="legend-item"
+                ><span class="legend-line dashed"></span>Seçilmeyen node üst
+                satıra taşındı</span
+              >
+            </div>
+
+            <div class="visual-scroll" id="visual-scroll">
+              <div class="placeholder" id="visual-placeholder">
+                Simülasyon başlatıldığında node'lar tek satırda sıralanacak.
+              </div>
+              <svg
+                id="huffman-svg"
+                aria-label="Huffman oluşturma görselleştirmesi"
+              ></svg>
+            </div>
+          </section>
+
+          <section class="section-card">
+            <h3>Bit Karşılaştırma Özeti</h3>
+            <div class="summary-grid" id="summary-output"></div>
+            <div class="summary-footnote">
+              Normal bit hesabı, her karakterin sabit 8 bit ile tutulduğu
+              varsayıma göre yapılır.
+            </div>
+          </section>
+
+          <section class="section-card">
+            <h3>Huffman Kod Tablosu</h3>
+            <div class="table-wrap" id="huffman-output"></div>
+          </section>
         </div>
+      </main>
     </div>
 
-    <script src="script.js"></script>
-</body>
+    <script>
+      const inputEl = document.getElementById("huffman-input");
+      const btnBuild = document.getElementById("btn-huffman");
+      const btnClear = document.getElementById("btn-clear");
+      const resultsEl = document.getElementById("results");
+      const svgEl = document.getElementById("huffman-svg");
+      const visualScrollEl = document.getElementById("visual-scroll");
+      const visualPlaceholderEl = document.getElementById("visual-placeholder");
+      const stepNoteEl = document.getElementById("step-note");
+      const stepCounterEl = document.getElementById("step-counter");
+      const btnFirst = document.getElementById("btn-first");
+      const btnPrev = document.getElementById("btn-prev");
+      const btnNext = document.getElementById("btn-next");
+      const btnPlay = document.getElementById("btn-play");
+      const summaryOutputEl = document.getElementById("summary-output");
+      const huffmanOutputEl = document.getElementById("huffman-output");
+
+      let appState = null;
+      let currentStep = 0;
+      let playTimer = null;
+
+      inputEl.addEventListener("input", function () {
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+        const upper = this.value.toLocaleUpperCase("tr-TR");
+        if (upper !== this.value) {
+          this.value = upper;
+          this.setSelectionRange(start, end);
+        }
+      });
+
+      btnBuild.addEventListener("click", () => {
+        const text = inputEl.value;
+        if (text.length === 0) {
+          alert("Lütfen önce bir metin girin!");
+          return;
+        }
+
+        stopAutoPlay();
+        appState = buildHuffmanModel(text);
+        currentStep = 0;
+        resultsEl.style.display = "flex";
+        visualPlaceholderEl.style.display = "none";
+        renderSummary(appState);
+        renderCodeTable(appState);
+        renderCurrentStep();
+      });
+
+      btnClear.addEventListener("click", () => {
+        stopAutoPlay();
+        inputEl.value = "";
+        appState = null;
+        currentStep = 0;
+        resultsEl.style.display = "none";
+        svgEl.innerHTML = "";
+        huffmanOutputEl.innerHTML = "";
+        summaryOutputEl.innerHTML = "";
+        visualPlaceholderEl.style.display = "block";
+        stepNoteEl.textContent =
+          "Metin girilip hesaplandığında Huffman oluşturma tablosu burada gösterilecek.";
+        stepCounterEl.textContent = "Adım: 0 / 0";
+      });
+
+      btnFirst.addEventListener("click", () => {
+        if (!appState) return;
+        currentStep = 0;
+        renderCurrentStep();
+      });
+
+      btnPrev.addEventListener("click", () => {
+        if (!appState || currentStep === 0) return;
+        currentStep--;
+        renderCurrentStep();
+      });
+
+      btnNext.addEventListener("click", () => {
+        if (!appState || currentStep >= appState.steps.length - 1) return;
+        currentStep++;
+        renderCurrentStep();
+      });
+
+      btnPlay.addEventListener("click", () => {
+        if (!appState) return;
+        if (playTimer) {
+          stopAutoPlay();
+          return;
+        }
+        btnPlay.textContent = "Durdur";
+        playTimer = setInterval(() => {
+          if (!appState || currentStep >= appState.steps.length - 1) {
+            stopAutoPlay();
+            return;
+          }
+          currentStep++;
+          renderCurrentStep();
+        }, 850);
+      });
+
+      window.addEventListener("resize", () => {
+        if (appState) renderCurrentStep();
+      });
+
+      function stopAutoPlay() {
+        if (playTimer) {
+          clearInterval(playTimer);
+          playTimer = null;
+        }
+        btnPlay.textContent = "Otomatik Oynat";
+      }
+
+      function buildHuffmanModel(text) {
+        const chars = Array.from(text);
+        const freqMap = new Map();
+        chars.forEach((ch) => freqMap.set(ch, (freqMap.get(ch) || 0) + 1));
+
+        let idCounter = 0;
+        let orderCounter = 0;
+        const nodes = new Map();
+
+        class Node {
+          constructor(char, freq, left = null, right = null) {
+            this.id = "n" + idCounter++;
+            this.char = char;
+            this.freq = freq;
+            this.left = left;
+            this.right = right;
+            this.order = orderCounter++;
+          }
+        }
+
+        const initialChars = Array.from(freqMap.keys()).sort((a, b) =>
+          displayChar(a).localeCompare(displayChar(b), "tr"),
+        );
+
+        let active = initialChars.map((ch) => {
+          const node = new Node(ch, freqMap.get(ch));
+          nodes.set(node.id, node);
+          return node;
+        });
+
+        const rows = [];
+        const operations = [];
+        sortNodes(active);
+        rows.push([...active]);
+
+        while (active.length > 1) {
+          sortNodes(active);
+          const rowBefore = rows.length - 1;
+          const left = active.shift();
+          const right = active.shift();
+          const parent = new Node(null, left.freq + right.freq, left, right);
+          nodes.set(parent.id, parent);
+
+          active.push(parent);
+          sortNodes(active);
+          rows.push([...active]);
+
+          operations.push({
+            rowBefore,
+            rowAfter: rows.length - 1,
+            leftId: left.id,
+            rightId: right.id,
+            parentId: parent.id,
+          });
+        }
+
+        const root = active[0];
+        const codes = new Map();
+        assignCodes(root, "");
+
+        const steps = [{ type: "initial", visibleRows: 1 }];
+        operations.forEach((op, index) => {
+          steps.push({
+            type: "select",
+            visibleRows: op.rowBefore + 1,
+            selectedRow: op.rowBefore,
+            selectedIds: [op.leftId, op.rightId],
+            operationIndex: index,
+          });
+          steps.push({
+            type: "merge",
+            visibleRows: op.rowAfter + 1,
+            selectedRow: op.rowBefore,
+            selectedIds: [op.leftId, op.rightId],
+            newParentId: op.parentId,
+            operationIndex: index,
+          });
+        });
+
+        if (operations.length > 0) {
+          steps.push({ type: "done", visibleRows: rows.length });
+        }
+
+        const normalBits = chars.length * 8;
+        const huffmanBits = chars.reduce(
+          (total, ch) => total + codes.get(ch).length,
+          0,
+        );
+        const savedBits = normalBits - huffmanBits;
+        const ratio = normalBits === 0 ? 0 : (huffmanBits / normalBits) * 100;
+        const savingPercent =
+          normalBits === 0 ? 0 : (savedBits / normalBits) * 100;
+
+        return {
+          text,
+          chars,
+          freqMap,
+          nodes,
+          rows,
+          operations,
+          steps,
+          codes,
+          root,
+          normalBits,
+          huffmanBits,
+          savedBits,
+          ratio,
+          savingPercent,
+        };
+
+        function sortNodes(list) {
+          list.sort((a, b) => {
+            if (a.freq !== b.freq) return a.freq - b.freq;
+            return a.order - b.order;
+          });
+        }
+
+        function assignCodes(node, code) {
+          if (!node) return;
+          if (node.char !== null) {
+            codes.set(node.char, code === "" ? "0" : code);
+            return;
+          }
+          assignCodes(node.left, code + "0");
+          assignCodes(node.right, code + "1");
+        }
+      }
+
+      function renderCurrentStep() {
+        if (!appState) return;
+
+        const step = appState.steps[currentStep];
+        drawConstructionTable(appState, step);
+        updateControls();
+        stepNoteEl.innerHTML = buildStepNote(appState, step);
+        stepCounterEl.textContent = `Adım: ${currentStep} / ${appState.steps.length - 1}`;
+      }
+
+      function updateControls() {
+        if (!appState) {
+          btnFirst.disabled = true;
+          btnPrev.disabled = true;
+          btnNext.disabled = true;
+          btnPlay.disabled = true;
+          return;
+        }
+        btnFirst.disabled = currentStep === 0;
+        btnPrev.disabled = currentStep === 0;
+        btnNext.disabled = currentStep >= appState.steps.length - 1;
+        btnPlay.disabled = appState.steps.length <= 1;
+      }
+
+      function buildStepNote(state, step) {
+        if (state.rows[0].length === 1) {
+          return "Tek farklı karakter olduğu için ağaç tek node'dan oluşur. Bu karaktere Huffman kodu <strong>0</strong> verildi.";
+        }
+
+        if (step.type === "initial") {
+          return "Başlangıç: Bütün node'lar ilk satırda frekanslarına göre <strong>küçükten büyüğe</strong> sıralandı.";
+        }
+
+        if (step.type === "select") {
+          const op = state.operations[step.operationIndex];
+          const left = state.nodes.get(op.leftId);
+          const right = state.nodes.get(op.rightId);
+          return `Bu satırdaki en küçük iki node seçildi: <strong>${nodeLabel(left)}</strong> ve <strong>${nodeLabel(right)}</strong>. Seçilenler kırmızı gösteriliyor.`;
+        }
+
+        if (step.type === "merge") {
+          const op = state.operations[step.operationIndex];
+          const left = state.nodes.get(op.leftId);
+          const right = state.nodes.get(op.rightId);
+          const parent = state.nodes.get(op.parentId);
+          return `<strong>${nodeLabel(left)}</strong> + <strong>${nodeLabel(right)}</strong> = <strong>${parent.freq}</strong> oldu. Kalan node'lar ve yeni <strong>${parent.freq}</strong> node'u üst satırda tekrar küçükten büyüğe sıralandı.`;
+        }
+
+        return "Son adım: En üstte tek kök node kaldı. Huffman ağacı tamamlandı.";
+      }
+
+      function drawConstructionTable(state, step) {
+        const visibleRows = step.visibleRows;
+        const rows = state.rows.slice(0, visibleRows);
+        const maxNodes = Math.max(...rows.map((row) => row.length));
+        const gap = 114;
+        const sidePadding = 105;
+        const rowGap = 118;
+        const topPadding = 58;
+        const bottomPadding = 64;
+        const minWidth = Math.max(760, visualScrollEl.clientWidth - 8);
+        const width = Math.max(
+          minWidth,
+          sidePadding * 2 + Math.max(0, maxNodes - 1) * gap + 120,
+        );
+        const height =
+          topPadding + bottomPadding + Math.max(0, visibleRows - 1) * rowGap;
+
+        svgEl.setAttribute("width", width);
+        svgEl.setAttribute("height", height);
+        svgEl.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        svgEl.innerHTML = "";
+
+        const positions = new Map();
+        rows.forEach((row, rowIndex) => {
+          const y = topPadding + (visibleRows - 1 - rowIndex) * rowGap;
+          const rowWidth = Math.max(0, row.length - 1) * gap;
+          const startX = width / 2 - rowWidth / 2;
+          row.forEach((node, nodeIndex) => {
+            const x = startX + nodeIndex * gap;
+            positions.set(positionKey(rowIndex, node.id), { x, y });
+          });
+        });
+
+        drawCarryLines(state, visibleRows, positions);
+        drawMergeLines(state, visibleRows, positions, step);
+        drawRows(state, rows, visibleRows, positions, step, width);
+      }
+
+      function drawCarryLines(state, visibleRows, positions) {
+        for (let rowIndex = 1; rowIndex < visibleRows; rowIndex++) {
+          const prevIds = new Set(
+            state.rows[rowIndex - 1].map((node) => node.id),
+          );
+          state.rows[rowIndex].forEach((node) => {
+            if (!prevIds.has(node.id)) return;
+            const from = positions.get(positionKey(rowIndex, node.id));
+            const to = positions.get(positionKey(rowIndex - 1, node.id));
+            if (!from || !to) return;
+            appendLine(from.x, from.y + 25, to.x, to.y - 25, "carry-line");
+          });
+        }
+      }
+
+      function drawMergeLines(state, visibleRows, positions, step) {
+        state.operations.forEach((op, index) => {
+          if (op.rowAfter >= visibleRows) return;
+          const parent = positions.get(positionKey(op.rowAfter, op.parentId));
+          const left = positions.get(positionKey(op.rowBefore, op.leftId));
+          const right = positions.get(positionKey(op.rowBefore, op.rightId));
+          if (!parent || !left || !right) return;
+
+          const isActive =
+            step.type === "merge" && step.operationIndex === index;
+          appendLine(
+            parent.x,
+            parent.y + 25,
+            left.x,
+            left.y - 25,
+            isActive ? "merge-line active" : "merge-line",
+          );
+          appendLine(
+            parent.x,
+            parent.y + 25,
+            right.x,
+            right.y - 25,
+            isActive ? "merge-line active" : "merge-line",
+          );
+          appendText(
+            (parent.x + left.x) / 2 - 12,
+            (parent.y + left.y) / 2 - 4,
+            "0",
+            "bit-label",
+          );
+          appendText(
+            (parent.x + right.x) / 2 + 10,
+            (parent.y + right.y) / 2 - 4,
+            "1",
+            "bit-label",
+          );
+        });
+      }
+
+      function drawRows(state, rows, visibleRows, positions, step, width) {
+        rows.forEach((row, rowIndex) => {
+          const y = topPaddingForRow(visibleRows, rowIndex);
+          appendText(24, y + 5, `Satır ${rowIndex + 1}`, "row-label", "start");
+          row.forEach((node) => {
+            const pos = positions.get(positionKey(rowIndex, node.id));
+            if (!pos) return;
+            const isSelected =
+              step.selectedRow === rowIndex &&
+              step.selectedIds &&
+              step.selectedIds.includes(node.id);
+            const isNewParent =
+              step.type === "merge" && step.newParentId === node.id;
+            appendNode(pos.x, pos.y, node, isSelected, isNewParent);
+          });
+        });
+
+        function topPaddingForRow(totalRows, rowIndex) {
+          const rowGap = 118;
+          const topPadding = 58;
+          return topPadding + (totalRows - 1 - rowIndex) * rowGap;
+        }
+      }
+
+      function appendNode(cx, cy, node, isSelected, isNewParent) {
+        const width = node.char === null ? 70 : 82;
+        const height = 50;
+        const rect = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "rect",
+        );
+        rect.setAttribute("x", cx - width / 2);
+        rect.setAttribute("y", cy - height / 2);
+        rect.setAttribute("width", width);
+        rect.setAttribute("height", height);
+        rect.setAttribute("rx", 14);
+        rect.setAttribute("ry", 14);
+        let className = "node-rect";
+        if (node.char === null) className += " internal";
+        if (isSelected) className += " selected";
+        if (isNewParent) className += " new-parent";
+        rect.setAttribute("class", className);
+        svgEl.appendChild(rect);
+
+        appendText(cx, cy + 1, nodeLabel(node), "node-text");
+      }
+
+      function appendLine(x1, y1, x2, y2, className) {
+        const line = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "line",
+        );
+        line.setAttribute("x1", x1);
+        line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2);
+        line.setAttribute("y2", y2);
+        line.setAttribute("class", className);
+        svgEl.appendChild(line);
+      }
+
+      function appendText(x, y, text, className, anchor = "middle") {
+        const node = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "text",
+        );
+        node.setAttribute("x", x);
+        node.setAttribute("y", y);
+        node.setAttribute("class", className);
+        node.setAttribute("text-anchor", anchor);
+        node.textContent = text;
+        svgEl.appendChild(node);
+      }
+
+      function positionKey(rowIndex, nodeId) {
+        return rowIndex + "_" + nodeId;
+      }
+
+      function renderSummary(state) {
+        const savedText = state.savedBits >= 0 ? "Tasarruf" : "Ek Bit";
+        const savedValue = Math.abs(state.savedBits);
+        const savedPercent = Math.abs(state.savingPercent).toFixed(1);
+        summaryOutputEl.innerHTML = `
+          <div class="summary-card">
+            <div class="summary-title">Normal</div>
+            <div class="summary-value">${state.normalBits} bit</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-title">Huffman</div>
+            <div class="summary-value">${state.huffmanBits} bit</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-title">${savedText}</div>
+            <div class="summary-value">${savedValue} bit</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-title">Huffman / Normal</div>
+            <div class="summary-value">%${state.ratio.toFixed(1)}</div>
+          </div>
+        `;
+      }
+
+      function renderCodeTable(state) {
+        const rows = Array.from(state.freqMap.keys()).sort((a, b) => {
+          const codeA = state.codes.get(a);
+          const codeB = state.codes.get(b);
+          if (codeA.length !== codeB.length) return codeA.length - codeB.length;
+          const freqDiff = state.freqMap.get(b) - state.freqMap.get(a);
+          if (freqDiff !== 0) return freqDiff;
+          return displayChar(a).localeCompare(displayChar(b), "tr");
+        });
+
+        let html = `
+          <table class="huffman-table">
+            <thead>
+              <tr>
+                <th>Karakter</th>
+                <th>Huffman Kodu</th>
+                <th>Kod Uzunluğu</th>
+                <th>Toplam Huffman Biti</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        rows.forEach((ch) => {
+          const code = state.codes.get(ch);
+          const count = state.freqMap.get(ch);
+          const totalBits = count * code.length;
+          html += `
+            <tr>
+              <td><strong>${escapeHtml(tableChar(ch))}</strong></td>
+              <td class="code-cell">${escapeHtml(code)}</td>
+              <td>${code.length} bit</td>
+              <td>${count} × ${code.length} = <strong>${totalBits} bit</strong></td>
+            </tr>
+          `;
+        });
+
+        html += "</tbody></table>";
+        huffmanOutputEl.innerHTML = html;
+      }
+
+      function nodeLabel(node) {
+        if (node.char === null) return String(node.freq);
+        return `${displayChar(node.char)}:${node.freq}`;
+      }
+
+      function displayChar(ch) {
+        if (ch === " ") return "␠";
+        if (ch === "\n") return "↵";
+        if (ch === "\t") return "⇥";
+        return ch;
+      }
+
+      function tableChar(ch) {
+        if (ch === " ") return "Boşluk";
+        if (ch === "\n") return "Satır sonu";
+        if (ch === "\t") return "Sekme";
+        return ch;
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+    </script>
+  </body>
 </html>
