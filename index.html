@@ -3,242 +3,512 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Huffman Algoritması Görselleştirici</title>
+    <title>Huffman ve LZW Görselleştirici</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
-      * {
+      :root {
+        --cream: #f5f0e8;
+        --cream-dark: #ede7d9;
+        --cream-darker: #e4dccb;
+        --ink: #1a1612;
+        --ink-mid: #3d3530;
+        --ink-light: #6b5f55;
+        --ink-faint: #a8998d;
+        --paper: #faf8f3;
+        --rule: #d4c9bb;
+
+        --accent-h: #1a1612; /* Huffman accent = ink */
+        --accent-l: #8b4513; /* LZW accent = saddle brown */
+        --accent-l-pale: #f0e4d4;
+
+        --node-leaf: #1a1612;
+        --node-internal: #6b5f55;
+        --node-selected: #8b4513;
+        --node-parent: #5a4a3a;
+
+        --code-pill: #1a1612;
+        --code-pill-h: #8b4513;
+
+        --green-ok: #3d6b4f;
+        --green-ok-pale: #dff0e6;
+        --amber-warn: #8b6914;
+        --amber-warn-pale: #f5edcc;
+      }
+
+      *,
+      *::before,
+      *::after {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       }
 
       body {
         min-height: 100vh;
-        background: #f4f7f6;
-        color: #263645;
-        padding: 20px;
+        background: var(--cream);
+        color: var(--ink);
+        font-family: "DM Sans", sans-serif;
+        padding: 28px 18px;
+        background-image:
+          repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 39px,
+            var(--rule) 39px,
+            var(--rule) 40px
+          ),
+          repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 39px,
+            var(--rule) 39px,
+            var(--rule) 40px
+          );
+        background-size: 40px 40px;
       }
 
       .container {
-        max-width: 1180px;
+        max-width: 1200px;
         margin: 0 auto;
-        background: #fff;
-        border-radius: 14px;
-        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.1);
+        background: var(--paper);
+        border: 2px solid var(--ink);
+        border-radius: 0;
+        box-shadow: 8px 8px 0 var(--ink);
         overflow: hidden;
       }
 
       header {
-        background: linear-gradient(135deg, #24313d, #34495e);
-        color: white;
-        text-align: center;
-        padding: 26px 18px;
+        background: var(--ink);
+        color: var(--cream);
+        padding: 36px 36px 30px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      header::before {
+        content: "";
+        position: absolute;
+        right: -60px;
+        top: -60px;
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        border: 40px solid rgba(255, 255, 255, 0.04);
+      }
+
+      header::after {
+        content: "";
+        position: absolute;
+        right: 40px;
+        bottom: -80px;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        border: 30px solid rgba(255, 255, 255, 0.03);
+      }
+
+      .header-eyebrow {
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--cream-darker);
+        margin-bottom: 10px;
+        opacity: 0.7;
       }
 
       header h1 {
-        font-size: 26px;
-        margin-bottom: 8px;
+        font-family: "Playfair Display", serif;
+        font-size: 36px;
+        font-weight: 900;
+        letter-spacing: -0.5px;
+        line-height: 1.1;
+        margin-bottom: 12px;
+        color: var(--paper);
       }
 
       header p {
         font-size: 14px;
-        opacity: 0.86;
+        line-height: 1.6;
+        color: var(--cream-darker);
+        max-width: 680px;
+        opacity: 0.8;
       }
 
       main {
-        padding: 28px;
+        padding: 32px;
+      }
+
+      .menu-title {
+        font-family: "Playfair Display", serif;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 14px;
+      }
+
+      .algorithm-menu {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+        margin-bottom: 28px;
+      }
+
+      .menu-card {
+        border: 2px solid var(--rule);
+        border-radius: 0;
+        background: var(--paper);
+        padding: 20px 22px;
+        text-align: left;
+        cursor: pointer;
+        transition:
+          border-color 0.18s,
+          box-shadow 0.18s,
+          background 0.18s,
+          transform 0.12s;
+        position: relative;
+      }
+
+      .menu-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: transparent;
+        transition: background 0.18s;
+      }
+
+      .menu-card:hover {
+        background: var(--cream);
+        border-color: var(--ink-mid);
+        transform: translateY(-2px);
+        box-shadow: 4px 4px 0 var(--ink-mid);
+      }
+
+      .menu-card.active {
+        background: var(--cream);
+        border-color: var(--ink);
+        box-shadow: 5px 5px 0 var(--ink);
+      }
+
+      .menu-card.active::before {
+        background: var(--ink);
+      }
+      .menu-card.lzw.active::before {
+        background: var(--accent-l);
+      }
+      .menu-card.lzw.active {
+        box-shadow: 5px 5px 0 var(--accent-l);
+        border-color: var(--accent-l);
+      }
+
+      .menu-card strong {
+        display: block;
+        font-family: "Playfair Display", serif;
+        font-size: 22px;
+        font-weight: 900;
+        color: var(--ink);
+        margin-bottom: 8px;
+      }
+
+      .menu-card span {
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--ink-light);
+      }
+
+      .workspace {
+        display: none;
+        border: 2px solid var(--rule);
+        padding: 22px;
+        background: var(--paper);
+        margin-bottom: 24px;
+      }
+
+      .workspace.active {
+        display: block;
+      }
+
+      .selected-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        background: var(--ink);
+        color: var(--cream);
+        font-family: "DM Mono", monospace;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 1px;
+        margin-bottom: 18px;
+      }
+
+      .selected-badge.lzw {
+        background: var(--accent-l);
       }
 
       .input-group {
         display: flex;
         flex-direction: column;
         gap: 14px;
-        margin-bottom: 26px;
       }
 
       label {
-        font-weight: 800;
-        color: #2c3e50;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--ink-faint);
       }
 
       textarea {
         width: 100%;
-        min-height: 118px;
-        padding: 15px;
-        border: 1px solid #cfd8dc;
-        border-radius: 9px;
+        min-height: 110px;
+        padding: 14px 16px;
+        border: 2px solid var(--rule);
+        border-radius: 0;
+        background: var(--cream);
         resize: vertical;
-        font-size: 15px;
-        line-height: 1.45;
+        font-family: "DM Mono", monospace;
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--ink);
         outline: none;
         transition:
-          border 0.2s,
-          box-shadow 0.2s;
+          border-color 0.18s,
+          box-shadow 0.18s;
       }
 
       textarea:focus {
-        border-color: #3498db;
-        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.16);
+        border-color: var(--ink);
+        box-shadow: 3px 3px 0 var(--ink);
       }
 
-      .button-row {
+      .button-row,
+      .controls {
         display: flex;
         flex-wrap: wrap;
-        gap: 12px;
+        gap: 10px;
         align-items: center;
       }
 
+      .controls {
+        justify-content: center;
+        margin-bottom: 16px;
+        padding: 14px;
+        background: var(--cream-dark);
+        border: 1px solid var(--rule);
+      }
+
       .action-btn {
-        border: none;
-        border-radius: 8px;
-        padding: 12px 20px;
-        font-size: 15px;
-        font-weight: 800;
+        border: 2px solid var(--ink);
+        border-radius: 0;
+        padding: 11px 20px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
         cursor: pointer;
-        color: white;
-        background: #27ae60;
+        background: var(--ink);
+        color: var(--cream);
         transition:
-          transform 0.15s,
-          background 0.2s,
-          opacity 0.2s;
+          transform 0.12s,
+          box-shadow 0.12s,
+          background 0.15s;
+        position: relative;
       }
 
       .action-btn:hover:not(:disabled) {
-        background: #219150;
-        transform: translateY(-1px);
+        transform: translate(-2px, -2px);
+        box-shadow: 3px 3px 0 var(--ink-mid);
       }
 
       .action-btn.secondary {
-        background: #3498db;
+        background: var(--paper);
+        color: var(--ink);
       }
 
       .action-btn.secondary:hover:not(:disabled) {
-        background: #287db5;
+        background: var(--cream);
+        box-shadow: 3px 3px 0 var(--ink);
+      }
+
+      .action-btn.tertiary {
+        background: var(--accent-l);
+        border-color: var(--accent-l);
+        color: white;
+      }
+
+      .action-btn.tertiary:hover:not(:disabled) {
+        box-shadow: 3px 3px 0 var(--ink-mid);
       }
 
       .action-btn.light {
-        background: #7f8c8d;
+        background: var(--paper);
+        color: var(--ink-mid);
+        border-color: var(--rule);
       }
 
       .action-btn.light:hover:not(:disabled) {
-        background: #697677;
+        background: var(--cream);
+        border-color: var(--ink-mid);
+        box-shadow: 3px 3px 0 var(--ink-mid);
       }
 
       .action-btn:disabled {
-        opacity: 0.48;
+        opacity: 0.35;
         cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .hint {
+        padding: 12px 16px;
+        border-left: 3px solid var(--ink);
+        background: var(--cream);
+        font-size: 13px;
+        line-height: 1.55;
+        color: var(--ink-mid);
+      }
+
+      .hint:empty,
+      #input-hint {
+        display: none;
+      }
+
+      .hint.lzw {
+        border-left-color: var(--accent-l);
       }
 
       .results {
         display: none;
+      }
+      .results.active {
+        display: block;
+      }
+
+      .algorithm-panel {
+        display: none;
         flex-direction: column;
         gap: 24px;
       }
+      .algorithm-panel.active {
+        display: flex;
+      }
 
       .section-card {
-        border: 1px solid #e4eaee;
-        border-radius: 12px;
-        background: #fff;
-        padding: 18px;
+        border: 2px solid var(--rule);
+        background: var(--paper);
+        padding: 22px;
       }
 
       h2 {
-        font-size: 22px;
-        margin-bottom: 14px;
-        color: #2c3e50;
+        font-family: "Playfair Display", serif;
+        font-size: 24px;
+        margin-bottom: 16px;
+        color: var(--ink);
       }
 
       h3 {
-        font-size: 18px;
-        margin-bottom: 14px;
-        color: #2c3e50;
-        border-bottom: 2px solid #ecf0f1;
-        padding-bottom: 8px;
+        font-family: "Playfair Display", serif;
+        font-size: 20px;
+        margin-bottom: 16px;
+        color: var(--ink);
+        border-bottom: 2px solid var(--ink);
+        padding-bottom: 10px;
       }
 
-      .controls {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 14px;
-        padding: 14px;
-        background: #ecf0f1;
-        border-radius: 9px;
+      h4 {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin: 16px 0 10px;
       }
 
-      #step-counter {
-        font-weight: 900;
-        font-size: 15px;
-        color: #2c3e50;
-        min-width: 128px;
+      .step-counter {
+        font-family: "DM Mono", monospace;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--ink-mid);
+        min-width: 140px;
         text-align: center;
+        background: var(--cream);
+        border: 1px solid var(--rule);
+        padding: 8px 12px;
       }
 
       .step-note {
-        margin-bottom: 14px;
-        padding: 13px 15px;
-        border-left: 5px solid #3498db;
-        border-radius: 8px;
-        background: #edf7ff;
-        color: #24435c;
-        line-height: 1.5;
-        font-weight: 600;
+        margin-bottom: 16px;
+        padding: 14px 18px;
+        border-left: 4px solid var(--ink);
+        background: var(--cream);
+        color: var(--ink-mid);
+        line-height: 1.6;
+        font-size: 14px;
+      }
+
+      .step-note.lzw {
+        border-left-color: var(--accent-l);
       }
 
       .legend {
         display: flex;
         flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 14px;
-        color: #566573;
-        font-size: 13px;
+        gap: 16px;
+        margin-bottom: 16px;
+        font-size: 12px;
+        color: var(--ink-light);
+        font-family: "DM Mono", monospace;
       }
 
       .legend-item {
         display: inline-flex;
         align-items: center;
-        gap: 7px;
+        gap: 8px;
       }
 
       .legend-dot {
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
+        width: 13px;
+        height: 13px;
+        border-radius: 2px;
         display: inline-block;
-        border: 2px solid #2c3e50;
+        border: 2px solid var(--ink);
       }
 
       .legend-dot.selected {
-        background: #e74c3c;
-        border-color: #c0392b;
+        background: var(--node-selected);
+        border-color: var(--node-selected);
       }
-
       .legend-dot.parent {
-        background: #2ecc71;
-        border-color: #1e8449;
+        background: var(--node-parent);
+        border-color: var(--node-parent);
       }
 
       .legend-line {
         width: 28px;
         height: 0;
         display: inline-block;
-        border-top: 3px solid #7f8c8d;
-      }
-
-      .legend-line.dashed {
-        border-top-style: dashed;
-        opacity: 0.7;
+        border-top: 2px dashed var(--ink-faint);
       }
 
       .visual-scroll {
         width: 100%;
-        min-height: 390px;
+        min-height: 460px;
+        max-height: 74vh;
         overflow: auto;
-        border: 2px dashed #bdc3c7;
-        border-radius: 10px;
-        background: #fbfcfc;
+        border: 2px solid var(--rule);
+        background: var(--cream);
+        background-image: radial-gradient(var(--rule) 1px, transparent 1px);
+        background-size: 22px 22px;
       }
 
       #huffman-svg {
@@ -246,480 +516,946 @@
         min-width: 100%;
       }
 
-      .row-label {
-        fill: #7f8c8d;
+      .placeholder {
+        color: var(--ink-faint);
+        font-family: "DM Mono", monospace;
         font-size: 13px;
-        font-weight: 800;
+        text-align: center;
+        padding: 48px 15px;
       }
 
-      .node-rect {
-        fill: #3498db;
-        stroke: #2c3e50;
-        stroke-width: 2;
+      /* SVG text styles */
+      .svg-title {
+        fill: var(--ink);
+        font-family: "DM Sans", sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .svg-subtitle {
+        fill: var(--ink-light);
+        font-family: "DM Mono", monospace;
+        font-size: 12px;
       }
 
-      .node-rect.internal {
-        fill: #2ecc71;
+      .queue-pill-bg {
+        fill: var(--paper);
+        stroke: var(--ink);
+        stroke-width: 1.5;
       }
-
-      .node-rect.selected {
-        fill: #e74c3c;
-        stroke: #c0392b;
-        stroke-width: 4;
-      }
-
-      .node-rect.new-parent {
-        stroke: #1e8449;
-        stroke-width: 4;
-      }
-
-      .node-text {
-        fill: white;
-        font-size: 15px;
-        font-weight: 900;
+      .queue-pill-text {
+        fill: var(--ink);
+        font-family: "DM Mono", monospace;
+        font-size: 12px;
+        font-weight: 500;
         text-anchor: middle;
         dominant-baseline: middle;
       }
 
-      .merge-line {
-        stroke: #7f8c8d;
-        stroke-width: 3;
-        fill: none;
-      }
-
-      .merge-line.active {
-        stroke: #e74c3c;
-        stroke-width: 4;
-      }
-
-      .carry-line {
-        stroke: #95a5a6;
+      .h-edge {
+        stroke: var(--rule);
         stroke-width: 2;
-        stroke-dasharray: 7 6;
-        opacity: 0.65;
         fill: none;
+        opacity: 0;
+        stroke-dasharray: 6 4;
+        transition:
+          opacity 0.28s ease,
+          stroke 0.22s,
+          stroke-width 0.22s;
+      }
+
+      .h-edge.active {
+        stroke: var(--node-selected);
+        stroke-width: 3;
+        stroke-dasharray: none;
+      }
+
+      .h-node {
+        opacity: 0;
+        transform-box: fill-box;
+        transform-origin: center;
+        transition:
+          transform 0.68s cubic-bezier(0.22, 1, 0.36, 1),
+          opacity 0.28s ease;
+        will-change: transform, opacity;
+      }
+
+      .node-rect {
+        fill: var(--node-leaf);
+        stroke: var(--ink);
+        stroke-width: 2;
+        transition:
+          fill 0.22s,
+          stroke 0.22s,
+          stroke-width 0.22s;
+      }
+
+      .node-rect.internal {
+        fill: var(--node-internal);
+      }
+
+      .h-node.selected .node-rect {
+        fill: var(--node-selected);
+        stroke: var(--node-selected);
+        stroke-width: 3;
+      }
+      .h-node.new-parent .node-rect {
+        fill: var(--node-parent);
+        stroke-width: 3;
+      }
+
+      .node-text {
+        fill: var(--cream);
+        font-family: "DM Mono", monospace;
+        font-size: 14px;
+        font-weight: 500;
+        text-anchor: middle;
+        dominant-baseline: middle;
+        pointer-events: none;
+      }
+
+      .node-text-small {
+        font-size: 11px;
+        opacity: 0.75;
       }
 
       .bit-label {
-        fill: #d35400;
-        font-size: 15px;
-        font-weight: 900;
+        fill: var(--accent-l);
+        font-family: "DM Mono", monospace;
+        font-size: 13px;
+        font-weight: 500;
+        text-anchor: middle;
+        dominant-baseline: middle;
         paint-order: stroke;
-        stroke: #ffffff;
-        stroke-width: 4px;
+        stroke: var(--cream);
+        stroke-width: 3px;
         stroke-linejoin: round;
       }
 
+      /* Summary grid */
       .summary-grid {
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(4, 1fr);
         gap: 14px;
+      }
+      .summary-grid.wide {
+        grid-template-columns: repeat(5, 1fr);
       }
 
       .summary-card {
-        border: 1px solid #dfe7ec;
-        border-radius: 11px;
-        padding: 15px;
-        background: #f8fafb;
+        border: 2px solid var(--rule);
+        padding: 16px;
+        background: var(--cream);
         text-align: center;
+        position: relative;
+      }
+
+      .summary-card.best {
+        border-color: var(--green-ok);
+        background: var(--green-ok-pale);
+      }
+      .summary-card.warn {
+        border-color: var(--amber-warn);
+        background: var(--amber-warn-pale);
       }
 
       .summary-title {
-        color: #6c7a86;
-        font-weight: 800;
-        font-size: 13px;
-        margin-bottom: 8px;
+        font-family: "DM Mono", monospace;
+        font-size: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 10px;
       }
 
       .summary-value {
-        color: #2c3e50;
-        font-weight: 900;
-        font-size: 22px;
+        font-family: "Playfair Display", serif;
+        font-size: 26px;
+        font-weight: 700;
+        color: var(--ink);
+        overflow-wrap: anywhere;
       }
 
+      .summary-sub {
+        margin-top: 6px;
+        font-size: 11px;
+        color: var(--ink-light);
+        font-family: "DM Mono", monospace;
+      }
       .summary-footnote {
         margin-top: 12px;
-        color: #667681;
-        font-size: 13px;
-        line-height: 1.45;
+        font-size: 12px;
+        color: var(--ink-light);
       }
 
+      /* Tables */
       .table-wrap {
         width: 100%;
         overflow-x: auto;
       }
 
-      .huffman-table {
+      .data-table {
         width: 100%;
         border-collapse: collapse;
-        background: #fff;
-        min-width: 540px;
+        background: var(--paper);
+        min-width: 640px;
       }
 
-      .huffman-table th,
-      .huffman-table td {
-        border: 1px solid #d8e0e4;
-        padding: 10px 11px;
+      .data-table th,
+      .data-table td {
+        border: 1px solid var(--rule);
+        padding: 10px 13px;
         text-align: center;
         vertical-align: middle;
+        font-size: 13px;
       }
 
-      .huffman-table th {
-        background: #2c3e50;
-        color: white;
-        font-weight: 800;
+      .data-table th {
+        background: var(--ink);
+        color: var(--cream);
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        font-weight: 500;
       }
 
-      .huffman-table tr:nth-child(even) td {
-        background: #f8fafb;
+      .data-table tr:nth-child(even) td {
+        background: var(--cream);
+      }
+      .data-table tr:hover td {
+        background: var(--cream-darker);
+      }
+      .data-table tr.new-row td {
+        background: var(--accent-l-pale) !important;
+        font-weight: 700;
+      }
+      .data-table tr.used-row td {
+        background: var(--amber-warn-pale) !important;
       }
 
-      .huffman-table tr:hover td {
-        background: #edf7ff;
+      .encoded-preview {
+        margin-top: 16px;
+        padding: 16px;
+        border: 2px solid var(--rule);
+        background: var(--cream);
+        color: var(--ink);
+        line-height: 1.6;
+        overflow-wrap: anywhere;
       }
 
-      .code-cell {
-        font-family: Consolas, Monaco, monospace;
-        font-weight: 900;
-        letter-spacing: 0.7px;
+      .encoded-preview .label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: var(--ink-faint);
+        font-family: "DM Mono", monospace;
       }
 
-      .placeholder {
-        color: #95a5a6;
-        font-style: italic;
+      .mono {
+        font-family: "DM Mono", monospace;
+        font-weight: 500;
+      }
+
+      /* LZW specific */
+      .lzw-stage {
+        border: 2px solid var(--accent-l);
+        background: var(--accent-l-pale);
+        padding: 18px;
+      }
+
+      .lzw-state-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .lzw-state-card {
+        border: 1px solid var(--rule);
+        padding: 14px;
+        background: var(--paper);
+      }
+
+      .lzw-state-card .label {
+        display: block;
+        font-family: "DM Mono", monospace;
+        font-size: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 8px;
+      }
+
+      .lzw-state-card .value {
+        font-family: "Playfair Display", serif;
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--ink);
+        overflow-wrap: anywhere;
+      }
+
+      .lzw-decision {
+        border: 2px solid var(--rule);
+        padding: 13px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1.55;
+        margin-bottom: 16px;
+        background: var(--paper);
+        color: var(--ink-mid);
+      }
+
+      .lzw-decision.match {
+        border-color: var(--green-ok);
+        background: var(--green-ok-pale);
+        color: var(--green-ok);
+      }
+      .lzw-decision.add {
+        border-color: var(--accent-l);
+        background: var(--accent-l-pale);
+        color: var(--accent-l);
+      }
+      .lzw-decision.flush {
+        border-color: var(--amber-warn);
+        background: var(--amber-warn-pale);
+        color: var(--amber-warn);
+      }
+
+      .output-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        min-height: 52px;
+        padding: 12px;
+        border: 2px solid var(--rule);
+        background: var(--paper);
+        margin-bottom: 16px;
+      }
+
+      .code-pill {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        padding: 8px 12px;
+        background: var(--ink);
+        color: var(--cream);
+        font-family: "DM Mono", monospace;
+        font-size: 15px;
+        font-weight: 500;
+        min-width: 52px;
+      }
+
+      .code-pill small {
+        font-size: 10px;
+        opacity: 0.65;
+        max-width: 140px;
+        overflow-wrap: anywhere;
         text-align: center;
-        padding: 38px 15px;
       }
 
-      @media (max-width: 780px) {
+      .dictionary-box {
+        max-height: 300px;
+        overflow: auto;
+      }
+
+      .status-pill {
+        display: inline-block;
+        padding: 6px 12px;
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        background: var(--cream-dark);
+        color: var(--ink-mid);
+        border: 1px solid var(--rule);
+      }
+
+      .status-pill.ok {
+        background: var(--green-ok-pale);
+        color: var(--green-ok);
+        border-color: var(--green-ok);
+      }
+      .status-pill.warn {
+        background: var(--amber-warn-pale);
+        color: var(--amber-warn);
+        border-color: var(--amber-warn);
+      }
+
+      @media (max-width: 960px) {
+        .summary-grid,
+        .summary-grid.wide,
+        .lzw-state-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      @media (max-width: 680px) {
         body {
           padding: 10px;
         }
-
         main {
           padding: 18px;
         }
-
-        .summary-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+        header {
+          padding: 24px 18px 20px;
         }
-      }
-
-      @media (max-width: 520px) {
-        .summary-grid {
+        header h1 {
+          font-size: 26px;
+        }
+        .algorithm-menu,
+        .summary-grid,
+        .summary-grid.wide,
+        .lzw-state-grid {
           grid-template-columns: 1fr;
         }
-
-        .controls .action-btn {
+        .controls .action-btn,
+        .button-row .action-btn {
           width: 100%;
         }
-
-        #step-counter {
+        .step-counter {
           width: 100%;
         }
       }
     </style>
   </head>
-
   <body>
     <div class="container">
       <header>
-        <h1>Huffman Algoritması Görselleştirici</h1>
-        <p>
-          Node'lar her satırda küçükten büyüğe sıralanır; en küçük iki node
-          seçilip üst satırda yeni toplam node oluşturulur.
-        </p>
+        <h1>Huffman &amp; LZW</h1>
       </header>
 
       <main>
-        <div class="input-group">
-          <label for="huffman-input">Sıkıştırılacak metin</label>
-          <textarea
-            id="huffman-input"
-            placeholder="Metni girin... Örnek frekans için: AAABBBBCCCCCDDDDDD"
-          ></textarea>
-          <div class="button-row">
-            <button class="action-btn" id="btn-huffman">
-              Huffman'ı Oluştur
-            </button>
-            <button class="action-btn light" id="btn-clear">Temizle</button>
+        <p class="menu-title">Algoritma</p>
+        <div class="algorithm-menu">
+          <button class="menu-card" data-algorithm="huffman" type="button">
+            <strong>Huffman</strong>
+          </button>
+          <button class="menu-card lzw" data-algorithm="lzw" type="button">
+            <strong>LZW</strong>
+          </button>
+        </div>
+
+        <section class="workspace" id="workspace">
+          <div class="selected-badge" id="selected-badge">Algoritma</div>
+          <div class="input-group">
+            <label for="compression-input" id="input-label">Metin</label>
+            <textarea
+              id="compression-input"
+              placeholder="Metin girin"
+            ></textarea>
+            <div class="button-row">
+              <button class="action-btn" id="btn-run">Görselleştir</button>
+              <button class="action-btn light" id="btn-clear">Temizle</button>
+            </div>
+            <div class="hint" id="input-hint"></div>
           </div>
-        </div>
+        </section>
 
-        <div class="results" id="results">
-          <section class="section-card">
-            <h3>Huffman Oluşturma Tablosu</h3>
-            <div class="controls" id="huffman-controls">
-              <button id="btn-first" class="action-btn secondary">
-                İlk Adım
-              </button>
-              <button id="btn-prev" class="action-btn secondary">
-                ◀ Önceki
-              </button>
-              <span id="step-counter">Adım: 0 / 0</span>
-              <button id="btn-next" class="action-btn secondary">
-                Sonraki ▶
-              </button>
-              <button id="btn-play" class="action-btn">Otomatik Oynat</button>
-            </div>
-
-            <div class="step-note" id="step-note">
-              Metin girilip hesaplandığında Huffman oluşturma tablosu burada
-              gösterilecek.
-            </div>
-
-            <div class="legend">
-              <span class="legend-item"
-                ><span class="legend-dot selected"></span>Seçilen en küçük iki
-                node</span
-              >
-              <span class="legend-item"
-                ><span class="legend-dot parent"></span>Yeni oluşan toplam
-                node</span
-              >
-              <span class="legend-item"
-                ><span class="legend-line"></span>0 / 1 Huffman bağlantısı</span
-              >
-              <span class="legend-item"
-                ><span class="legend-line dashed"></span>Seçilmeyen node üst
-                satıra taşındı</span
-              >
-            </div>
-
-            <div class="visual-scroll" id="visual-scroll">
-              <div class="placeholder" id="visual-placeholder">
-                Simülasyon başlatıldığında node'lar tek satırda sıralanacak.
+        <section class="results" id="results">
+          <div class="algorithm-panel" id="panel-huffman">
+            <section class="section-card">
+              <h3>Huffman Görselleştirme</h3>
+              <div class="controls">
+                <button id="huffman-first" class="action-btn secondary">
+                  İlk
+                </button>
+                <button id="huffman-prev" class="action-btn secondary">
+                  ◀
+                </button>
+                <span id="huffman-step-counter" class="step-counter"
+                  >0 / 0</span
+                >
+                <button id="huffman-next" class="action-btn secondary">
+                  ▶
+                </button>
+                <button id="huffman-play" class="action-btn">Oynat</button>
               </div>
-              <svg
-                id="huffman-svg"
-                aria-label="Huffman oluşturma görselleştirmesi"
-              ></svg>
-            </div>
-          </section>
+              <div class="step-note" id="huffman-step-note">—</div>
+              <div class="legend">
+                <span class="legend-item"
+                  ><span class="legend-dot selected"></span>Seçilen</span
+                >
+                <span class="legend-item"
+                  ><span class="legend-dot parent"></span>Parent</span
+                >
+                <span class="legend-item"
+                  ><span class="legend-line"></span>0 / 1</span
+                >
+              </div>
+              <div class="visual-scroll" id="visual-scroll">
+                <div class="placeholder" id="visual-placeholder">—</div>
+                <svg
+                  id="huffman-svg"
+                  aria-label="Huffman oluşturma görselleştirmesi"
+                ></svg>
+              </div>
+            </section>
 
-          <section class="section-card">
-            <h3>Bit Karşılaştırma Özeti</h3>
-            <div class="summary-grid" id="summary-output"></div>
-            <div class="summary-footnote">
-              Normal bit hesabı, her karakterin sabit 8 bit ile tutulduğu
-              varsayıma göre yapılır.
-            </div>
-          </section>
+            <section class="section-card">
+              <h3>Huffman Bit Özeti</h3>
+              <div class="summary-grid" id="huffman-summary-output"></div>
+              <div class="encoded-preview" id="huffman-bitstream-output">
+                <span class="label">Kodlanan bit dizisi</span>—
+              </div>
+            </section>
 
-          <section class="section-card">
-            <h3>Huffman Kod Tablosu</h3>
-            <div class="table-wrap" id="huffman-output"></div>
-          </section>
-        </div>
+            <section class="section-card">
+              <h3>Huffman Kod Tablosu</h3>
+              <div class="table-wrap" id="huffman-output"></div>
+            </section>
+          </div>
+
+          <div class="algorithm-panel" id="panel-lzw">
+            <section class="section-card">
+              <h3>LZW Adım Adım Sözlük Oluşturma</h3>
+              <div class="controls">
+                <button id="lzw-first" class="action-btn tertiary">İlk</button>
+                <button id="lzw-prev" class="action-btn tertiary">◀</button>
+                <span id="lzw-step-counter" class="step-counter">0 / 0</span>
+                <button id="lzw-next" class="action-btn tertiary">▶</button>
+                <button id="lzw-play" class="action-btn">Oynat</button>
+              </div>
+              <div class="step-note lzw" id="lzw-step-note">—</div>
+
+              <div class="lzw-stage">
+                <div class="lzw-state-grid">
+                  <div class="lzw-state-card">
+                    <span class="label">Okuma Konumu</span>
+                    <div class="value" id="lzw-read-pos">—</div>
+                  </div>
+                  <div class="lzw-state-card">
+                    <span class="label">Önceki w</span>
+                    <div class="value mono" id="lzw-before-w">—</div>
+                  </div>
+                  <div class="lzw-state-card">
+                    <span class="label">Okunan k</span>
+                    <div class="value mono" id="lzw-k">—</div>
+                  </div>
+                  <div class="lzw-state-card">
+                    <span class="label">Kontrol w + k</span>
+                    <div class="value mono" id="lzw-wk">—</div>
+                  </div>
+                  <div class="lzw-state-card">
+                    <span class="label">Sonraki w</span>
+                    <div class="value mono" id="lzw-current-w">—</div>
+                  </div>
+                </div>
+                <div class="lzw-decision" id="lzw-decision">—</div>
+                <h4>O ana kadar oluşan çıktı kodları</h4>
+                <div class="output-strip" id="lzw-output-strip">
+                  <span class="placeholder">—</span>
+                </div>
+                <h4>O adımdaki sözlük durumu</h4>
+                <div
+                  class="dictionary-box table-wrap"
+                  id="lzw-current-dictionary"
+                ></div>
+              </div>
+            </section>
+
+            <section class="section-card">
+              <h3>LZW Bit Özeti</h3>
+              <div class="summary-grid wide" id="lzw-summary-output"></div>
+              <div class="summary-footnote" id="lzw-decode-status"></div>
+            </section>
+
+            <section class="section-card">
+              <h3>LZW Ayrıntılı Adım Tablosu</h3>
+              <div class="table-wrap" id="lzw-steps-output"></div>
+            </section>
+
+            <section class="section-card">
+              <h3>LZW Final Sözlük Tablosu</h3>
+              <div class="table-wrap" id="lzw-dictionary-output"></div>
+            </section>
+          </div>
+        </section>
       </main>
     </div>
 
     <script>
-      const inputEl = document.getElementById("huffman-input");
-      const btnBuild = document.getElementById("btn-huffman");
+      const inputEl = document.getElementById("compression-input");
+      const workspaceEl = document.getElementById("workspace");
+      const selectedBadgeEl = document.getElementById("selected-badge");
+      const inputLabelEl = document.getElementById("input-label");
+      const inputHintEl = document.getElementById("input-hint");
+      const btnRun = document.getElementById("btn-run");
       const btnClear = document.getElementById("btn-clear");
+      const menuCards = Array.from(document.querySelectorAll(".menu-card"));
       const resultsEl = document.getElementById("results");
+      const panelHuffman = document.getElementById("panel-huffman");
+      const panelLzw = document.getElementById("panel-lzw");
       const svgEl = document.getElementById("huffman-svg");
       const visualScrollEl = document.getElementById("visual-scroll");
       const visualPlaceholderEl = document.getElementById("visual-placeholder");
-      const stepNoteEl = document.getElementById("step-note");
-      const stepCounterEl = document.getElementById("step-counter");
-      const btnFirst = document.getElementById("btn-first");
-      const btnPrev = document.getElementById("btn-prev");
-      const btnNext = document.getElementById("btn-next");
-      const btnPlay = document.getElementById("btn-play");
-      const summaryOutputEl = document.getElementById("summary-output");
+      const huffmanStepNoteEl = document.getElementById("huffman-step-note");
+      const huffmanStepCounterEl = document.getElementById(
+        "huffman-step-counter",
+      );
+      const huffmanFirstBtn = document.getElementById("huffman-first");
+      const huffmanPrevBtn = document.getElementById("huffman-prev");
+      const huffmanNextBtn = document.getElementById("huffman-next");
+      const huffmanPlayBtn = document.getElementById("huffman-play");
+      const huffmanSummaryOutputEl = document.getElementById(
+        "huffman-summary-output",
+      );
+      const huffmanBitstreamOutputEl = document.getElementById(
+        "huffman-bitstream-output",
+      );
       const huffmanOutputEl = document.getElementById("huffman-output");
+      const lzwStepNoteEl = document.getElementById("lzw-step-note");
+      const lzwStepCounterEl = document.getElementById("lzw-step-counter");
+      const lzwFirstBtn = document.getElementById("lzw-first");
+      const lzwPrevBtn = document.getElementById("lzw-prev");
+      const lzwNextBtn = document.getElementById("lzw-next");
+      const lzwPlayBtn = document.getElementById("lzw-play");
+      const lzwReadPosEl = document.getElementById("lzw-read-pos");
+      const lzwBeforeWEl = document.getElementById("lzw-before-w");
+      const lzwKEl = document.getElementById("lzw-k");
+      const lzwWkEl = document.getElementById("lzw-wk");
+      const lzwCurrentWEl = document.getElementById("lzw-current-w");
+      const lzwDecisionEl = document.getElementById("lzw-decision");
+      const lzwOutputStripEl = document.getElementById("lzw-output-strip");
+      const lzwCurrentDictionaryEl = document.getElementById(
+        "lzw-current-dictionary",
+      );
+      const lzwSummaryOutputEl = document.getElementById("lzw-summary-output");
+      const lzwDecodeStatusEl = document.getElementById("lzw-decode-status");
+      const lzwStepsOutputEl = document.getElementById("lzw-steps-output");
+      const lzwDictionaryOutputEl = document.getElementById(
+        "lzw-dictionary-output",
+      );
 
-      let appState = null;
-      let currentStep = 0;
-      let playTimer = null;
+      let activeAlgorithm = null;
+      let huffmanState = null;
+      let lzwState = null;
+      let huffmanCurrentStep = 0;
+      let lzwCurrentStep = 0;
+      let huffmanPlayTimer = null;
+      let lzwPlayTimer = null;
+      let huffmanViz = createHuffmanVizCache();
 
-      inputEl.addEventListener("input", function () {
-        const start = this.selectionStart;
-        const end = this.selectionEnd;
-        const upper = this.value.toLocaleUpperCase("tr-TR");
-        if (upper !== this.value) {
-          this.value = upper;
-          this.setSelectionRange(start, end);
-        }
+      menuCards.forEach((card) =>
+        card.addEventListener("click", () =>
+          chooseAlgorithm(card.dataset.algorithm),
+        ),
+      );
+      btnRun.addEventListener("click", runSelectedAlgorithm);
+      btnClear.addEventListener("click", clearCurrent);
+      huffmanFirstBtn.addEventListener("click", () => {
+        if (!huffmanState) return;
+        huffmanCurrentStep = 0;
+        renderHuffmanCurrentStep();
       });
-
-      btnBuild.addEventListener("click", () => {
-        const text = inputEl.value;
-        if (text.length === 0) {
-          alert("Lütfen önce bir metin girin!");
+      huffmanPrevBtn.addEventListener("click", () => {
+        if (!huffmanState || huffmanCurrentStep === 0) return;
+        huffmanCurrentStep--;
+        renderHuffmanCurrentStep();
+      });
+      huffmanNextBtn.addEventListener("click", () => {
+        if (
+          !huffmanState ||
+          huffmanCurrentStep >= huffmanState.steps.length - 1
+        )
+          return;
+        huffmanCurrentStep++;
+        renderHuffmanCurrentStep();
+      });
+      huffmanPlayBtn.addEventListener("click", () => {
+        if (!huffmanState) return;
+        if (huffmanPlayTimer) {
+          stopHuffmanAutoPlay();
           return;
         }
-
-        stopAutoPlay();
-        appState = buildHuffmanModel(text);
-        currentStep = 0;
-        resultsEl.style.display = "flex";
-        visualPlaceholderEl.style.display = "none";
-        renderSummary(appState);
-        renderCodeTable(appState);
-        renderCurrentStep();
-      });
-
-      btnClear.addEventListener("click", () => {
-        stopAutoPlay();
-        inputEl.value = "";
-        appState = null;
-        currentStep = 0;
-        resultsEl.style.display = "none";
-        svgEl.innerHTML = "";
-        huffmanOutputEl.innerHTML = "";
-        summaryOutputEl.innerHTML = "";
-        visualPlaceholderEl.style.display = "block";
-        stepNoteEl.textContent =
-          "Metin girilip hesaplandığında Huffman oluşturma tablosu burada gösterilecek.";
-        stepCounterEl.textContent = "Adım: 0 / 0";
-      });
-
-      btnFirst.addEventListener("click", () => {
-        if (!appState) return;
-        currentStep = 0;
-        renderCurrentStep();
-      });
-
-      btnPrev.addEventListener("click", () => {
-        if (!appState || currentStep === 0) return;
-        currentStep--;
-        renderCurrentStep();
-      });
-
-      btnNext.addEventListener("click", () => {
-        if (!appState || currentStep >= appState.steps.length - 1) return;
-        currentStep++;
-        renderCurrentStep();
-      });
-
-      btnPlay.addEventListener("click", () => {
-        if (!appState) return;
-        if (playTimer) {
-          stopAutoPlay();
-          return;
-        }
-        btnPlay.textContent = "Durdur";
-        playTimer = setInterval(() => {
-          if (!appState || currentStep >= appState.steps.length - 1) {
-            stopAutoPlay();
+        stopLzwAutoPlay();
+        huffmanPlayBtn.textContent = "Durdur";
+        huffmanPlayTimer = setInterval(() => {
+          if (
+            !huffmanState ||
+            huffmanCurrentStep >= huffmanState.steps.length - 1
+          ) {
+            stopHuffmanAutoPlay();
             return;
           }
-          currentStep++;
-          renderCurrentStep();
-        }, 850);
+          huffmanCurrentStep++;
+          renderHuffmanCurrentStep();
+        }, 900);
       });
-
-      window.addEventListener("resize", () => {
-        if (appState) renderCurrentStep();
+      lzwFirstBtn.addEventListener("click", () => {
+        if (!lzwState) return;
+        lzwCurrentStep = 0;
+        renderLzwCurrentStep();
       });
-
-      function stopAutoPlay() {
-        if (playTimer) {
-          clearInterval(playTimer);
-          playTimer = null;
+      lzwPrevBtn.addEventListener("click", () => {
+        if (!lzwState || lzwCurrentStep === 0) return;
+        lzwCurrentStep--;
+        renderLzwCurrentStep();
+      });
+      lzwNextBtn.addEventListener("click", () => {
+        if (!lzwState || lzwCurrentStep >= lzwState.steps.length - 1) return;
+        lzwCurrentStep++;
+        renderLzwCurrentStep();
+      });
+      lzwPlayBtn.addEventListener("click", () => {
+        if (!lzwState) return;
+        if (lzwPlayTimer) {
+          stopLzwAutoPlay();
+          return;
         }
-        btnPlay.textContent = "Otomatik Oynat";
+        stopHuffmanAutoPlay();
+        lzwPlayBtn.textContent = "Durdur";
+        lzwPlayTimer = setInterval(() => {
+          if (!lzwState || lzwCurrentStep >= lzwState.steps.length - 1) {
+            stopLzwAutoPlay();
+            return;
+          }
+          lzwCurrentStep++;
+          renderLzwCurrentStep();
+        }, 900);
+      });
+      window.addEventListener("resize", () => {
+        if (activeAlgorithm === "huffman" && huffmanState)
+          renderHuffmanCurrentStep();
+      });
+      updateControlStates();
+
+      function chooseAlgorithm(algorithm) {
+        stopAllAutoPlay();
+        activeAlgorithm = algorithm;
+        workspaceEl.classList.add("active");
+        resultsEl.classList.remove("active");
+        panelHuffman.classList.remove("active");
+        panelLzw.classList.remove("active");
+        menuCards.forEach((card) =>
+          card.classList.toggle("active", card.dataset.algorithm === algorithm),
+        );
+        const isLzw = algorithm === "lzw";
+        selectedBadgeEl.className = isLzw
+          ? "selected-badge lzw"
+          : "selected-badge";
+        selectedBadgeEl.textContent = isLzw ? "LZW" : "Huffman";
+        inputLabelEl.textContent = "Metin";
+        btnRun.textContent = "Görselleştir";
+        btnRun.className = isLzw
+          ? "action-btn tertiary"
+          : "action-btn secondary";
+        inputHintEl.className = isLzw ? "hint lzw" : "hint";
+        inputHintEl.innerHTML = isLzw ? "" : "";
+        setTimeout(() => inputEl.focus(), 50);
+      }
+
+      function runSelectedAlgorithm() {
+        if (!activeAlgorithm) {
+          alert("Lütfen önce Huffman veya LZW menüsünü seçin.");
+          return;
+        }
+        const text = inputEl.value;
+        if (text.length === 0) {
+          alert("Lütfen önce bir metin girin.");
+          return;
+        }
+        stopAllAutoPlay();
+        resultsEl.classList.add("active");
+        if (activeAlgorithm === "huffman") {
+          lzwState = null;
+          panelLzw.classList.remove("active");
+          panelHuffman.classList.add("active");
+          huffmanState = buildHuffmanModel(text);
+          huffmanCurrentStep = 0;
+          huffmanViz = createHuffmanVizCache();
+          resetHuffmanSvg();
+          renderHuffmanSummary(huffmanState);
+          renderHuffmanCodeTable(huffmanState);
+          renderHuffmanCurrentStep();
+        } else {
+          huffmanState = null;
+          panelHuffman.classList.remove("active");
+          panelLzw.classList.add("active");
+          lzwState = buildLzwModel(text);
+          lzwCurrentStep = 0;
+          renderLzwSummary(lzwState);
+          renderLzwStepTable(lzwState);
+          renderLzwDictionaryTable(lzwState);
+          renderLzwCurrentStep();
+        }
+        updateControlStates();
+      }
+
+      function clearCurrent() {
+        stopAllAutoPlay();
+        inputEl.value = "";
+        resultsEl.classList.remove("active");
+        panelHuffman.classList.remove("active");
+        panelLzw.classList.remove("active");
+        huffmanState = null;
+        lzwState = null;
+        huffmanCurrentStep = 0;
+        lzwCurrentStep = 0;
+        resetHuffmanOutputs();
+        resetLzwOutputs();
+        updateControlStates();
+      }
+
+      function resetHuffmanOutputs() {
+        resetHuffmanSvg();
+        huffmanSummaryOutputEl.innerHTML = "";
+        huffmanOutputEl.innerHTML = "";
+        huffmanStepCounterEl.textContent = "0 / 0";
+        huffmanStepNoteEl.textContent = "—";
+        huffmanBitstreamOutputEl.innerHTML =
+          '<span class="label">Kodlanan bit dizisi</span>—';
+      }
+
+      function resetLzwOutputs() {
+        lzwSummaryOutputEl.innerHTML = "";
+        lzwStepsOutputEl.innerHTML = "";
+        lzwDictionaryOutputEl.innerHTML = "";
+        lzwDecodeStatusEl.innerHTML = "";
+        lzwCurrentDictionaryEl.innerHTML = "";
+        lzwOutputStripEl.innerHTML = '<span class="placeholder">—</span>';
+        lzwStepNoteEl.textContent = "—";
+        lzwStepCounterEl.textContent = "0 / 0";
+        lzwReadPosEl.textContent = "—";
+        lzwBeforeWEl.textContent = "—";
+        lzwKEl.textContent = "—";
+        lzwWkEl.textContent = "—";
+        lzwCurrentWEl.textContent = "—";
+        lzwDecisionEl.className = "lzw-decision";
+        lzwDecisionEl.textContent = "—";
+      }
+
+      function updateControlStates() {
+        huffmanFirstBtn.disabled = !huffmanState || huffmanCurrentStep === 0;
+        huffmanPrevBtn.disabled = !huffmanState || huffmanCurrentStep === 0;
+        huffmanNextBtn.disabled =
+          !huffmanState || huffmanCurrentStep >= huffmanState.steps.length - 1;
+        huffmanPlayBtn.disabled =
+          !huffmanState || huffmanState.steps.length <= 1;
+        lzwFirstBtn.disabled = !lzwState || lzwCurrentStep === 0;
+        lzwPrevBtn.disabled = !lzwState || lzwCurrentStep === 0;
+        lzwNextBtn.disabled =
+          !lzwState || lzwCurrentStep >= lzwState.steps.length - 1;
+        lzwPlayBtn.disabled = !lzwState || lzwState.steps.length <= 1;
+      }
+
+      function stopAllAutoPlay() {
+        stopHuffmanAutoPlay();
+        stopLzwAutoPlay();
+      }
+      function stopHuffmanAutoPlay() {
+        if (huffmanPlayTimer) {
+          clearInterval(huffmanPlayTimer);
+          huffmanPlayTimer = null;
+        }
+        huffmanPlayBtn.textContent = "Oynat";
+      }
+      function stopLzwAutoPlay() {
+        if (lzwPlayTimer) {
+          clearInterval(lzwPlayTimer);
+          lzwPlayTimer = null;
+        }
+        lzwPlayBtn.textContent = "Oynat";
       }
 
       function buildHuffmanModel(text) {
         const chars = Array.from(text);
         const freqMap = new Map();
         chars.forEach((ch) => freqMap.set(ch, (freqMap.get(ch) || 0) + 1));
-
-        let idCounter = 0;
-        let orderCounter = 0;
+        let idCounter = 0,
+          orderCounter = 0;
         const nodes = new Map();
-
         class Node {
-          constructor(char, freq, left = null, right = null) {
+          constructor(char, freq, left = null, right = null, createdAt = -1) {
             this.id = "n" + idCounter++;
             this.char = char;
             this.freq = freq;
             this.left = left;
             this.right = right;
             this.order = orderCounter++;
+            this.createdAt = createdAt;
           }
         }
-
-        const initialChars = Array.from(freqMap.keys()).sort((a, b) =>
-          displayChar(a).localeCompare(displayChar(b), "tr"),
-        );
-
+        const initialChars = Array.from(freqMap.keys()).sort(compareSymbols);
         let active = initialChars.map((ch) => {
           const node = new Node(ch, freqMap.get(ch));
           nodes.set(node.id, node);
           return node;
         });
-
-        const rows = [];
-        const operations = [];
+        const rows = [],
+          operations = [];
         sortNodes(active);
         rows.push([...active]);
-
         while (active.length > 1) {
           sortNodes(active);
-          const rowBefore = rows.length - 1;
-          const left = active.shift();
-          const right = active.shift();
-          const parent = new Node(null, left.freq + right.freq, left, right);
+          const beforeIds = active.map((n) => n.id);
+          const left = active.shift(),
+            right = active.shift();
+          const opIndex = operations.length;
+          const parent = new Node(
+            null,
+            left.freq + right.freq,
+            left,
+            right,
+            opIndex,
+          );
           nodes.set(parent.id, parent);
-
           active.push(parent);
           sortNodes(active);
+          const afterIds = active.map((n) => n.id);
           rows.push([...active]);
-
           operations.push({
-            rowBefore,
+            rowBefore: rows.length - 2,
             rowAfter: rows.length - 1,
+            beforeIds,
+            afterIds,
             leftId: left.id,
             rightId: right.id,
             parentId: parent.id,
           });
         }
-
         const root = active[0];
         const codes = new Map();
         assignCodes(root, "");
-
-        const steps = [{ type: "initial", visibleRows: 1 }];
+        const steps = [{ type: "initial", visibleRows: 1, operationIndex: -1 }];
         operations.forEach((op, index) => {
           steps.push({
             type: "select",
             visibleRows: op.rowBefore + 1,
-            selectedRow: op.rowBefore,
             selectedIds: [op.leftId, op.rightId],
             operationIndex: index,
           });
           steps.push({
             type: "merge",
             visibleRows: op.rowAfter + 1,
-            selectedRow: op.rowBefore,
             selectedIds: [op.leftId, op.rightId],
             newParentId: op.parentId,
             operationIndex: index,
           });
         });
-
-        if (operations.length > 0) {
-          steps.push({ type: "done", visibleRows: rows.length });
-        }
-
-        const normalBits = chars.length * 8;
-        const huffmanBits = chars.reduce(
-          (total, ch) => total + codes.get(ch).length,
-          0,
-        );
+        if (operations.length > 0)
+          steps.push({
+            type: "done",
+            visibleRows: rows.length,
+            operationIndex: operations.length - 1,
+          });
+        const encodedBits = chars.map((ch) => codes.get(ch)).join("");
+        const decodedText = decodeHuffmanBits(encodedBits, root, chars.length);
+        const normalBits = chars.length * 8,
+          huffmanBits = encodedBits.length;
         const savedBits = normalBits - huffmanBits;
-        const ratio = normalBits === 0 ? 0 : (huffmanBits / normalBits) * 100;
         const savingPercent =
           normalBits === 0 ? 0 : (savedBits / normalBits) * 100;
-
+        const ratio = normalBits === 0 ? 0 : (huffmanBits / normalBits) * 100;
+        const averageCodeLength =
+          chars.length === 0 ? 0 : huffmanBits / chars.length;
         return {
           text,
           chars,
+          uniqueCount: freqMap.size,
           freqMap,
           nodes,
           rows,
@@ -727,20 +1463,25 @@
           steps,
           codes,
           root,
+          encodedBits,
+          decodedText,
+          decodeMatches: decodedText === text,
+          prefixFree: isPrefixFree(codes),
           normalBits,
           huffmanBits,
           savedBits,
-          ratio,
           savingPercent,
+          ratio,
+          averageCodeLength,
         };
-
         function sortNodes(list) {
-          list.sort((a, b) => {
-            if (a.freq !== b.freq) return a.freq - b.freq;
-            return a.order - b.order;
-          });
+          list.sort((a, b) =>
+            a.freq !== b.freq ? a.freq - b.freq : a.order - b.order,
+          );
         }
-
+        function compareSymbols(a, b) {
+          return displayChar(a).localeCompare(displayChar(b), "tr");
+        }
         function assignCodes(node, code) {
           if (!node) return;
           if (node.char !== null) {
@@ -752,310 +1493,833 @@
         }
       }
 
-      function renderCurrentStep() {
-        if (!appState) return;
-
-        const step = appState.steps[currentStep];
-        drawConstructionTable(appState, step);
-        updateControls();
-        stepNoteEl.innerHTML = buildStepNote(appState, step);
-        stepCounterEl.textContent = `Adım: ${currentStep} / ${appState.steps.length - 1}`;
+      function renderHuffmanCurrentStep() {
+        if (!huffmanState) return;
+        const step = huffmanState.steps[huffmanCurrentStep];
+        visualPlaceholderEl.style.display = "none";
+        drawHuffmanAnimatedForest(huffmanState, step);
+        huffmanStepNoteEl.innerHTML = buildHuffmanStepNote(huffmanState, step);
+        huffmanStepCounterEl.textContent = `${huffmanCurrentStep} / ${huffmanState.steps.length - 1}`;
+        updateControlStates();
       }
 
-      function updateControls() {
-        if (!appState) {
-          btnFirst.disabled = true;
-          btnPrev.disabled = true;
-          btnNext.disabled = true;
-          btnPlay.disabled = true;
-          return;
-        }
-        btnFirst.disabled = currentStep === 0;
-        btnPrev.disabled = currentStep === 0;
-        btnNext.disabled = currentStep >= appState.steps.length - 1;
-        btnPlay.disabled = appState.steps.length <= 1;
-      }
-
-      function buildStepNote(state, step) {
-        if (state.rows[0].length === 1) {
-          return "Tek farklı karakter olduğu için ağaç tek node'dan oluşur. Bu karaktere Huffman kodu <strong>0</strong> verildi.";
-        }
-
-        if (step.type === "initial") {
-          return "Başlangıç: Bütün node'lar ilk satırda frekanslarına göre <strong>küçükten büyüğe</strong> sıralandı.";
-        }
-
+      function buildHuffmanStepNote(state, step) {
+        if (state.rows[0].length === 1)
+          return `Tek karakter: <strong>0</strong>.`;
+        if (step.type === "initial")
+          return `Başlangıç: ${formatHuffmanQueue(
+            state,
+            state.rows[0].map((n) => n.id),
+          )}`;
         if (step.type === "select") {
           const op = state.operations[step.operationIndex];
           const left = state.nodes.get(op.leftId);
           const right = state.nodes.get(op.rightId);
-          return `Bu satırdaki en küçük iki node seçildi: <strong>${nodeLabel(left)}</strong> ve <strong>${nodeLabel(right)}</strong>. Seçilenler kırmızı gösteriliyor.`;
+          return `Seçilen: <strong>${escapeHtml(nodeLabel(left))}</strong> + <strong>${escapeHtml(nodeLabel(right))}</strong>.`;
         }
-
         if (step.type === "merge") {
           const op = state.operations[step.operationIndex];
           const left = state.nodes.get(op.leftId);
           const right = state.nodes.get(op.rightId);
           const parent = state.nodes.get(op.parentId);
-          return `<strong>${nodeLabel(left)}</strong> + <strong>${nodeLabel(right)}</strong> = <strong>${parent.freq}</strong> oldu. Kalan node'lar ve yeni <strong>${parent.freq}</strong> node'u üst satırda tekrar küçükten büyüğe sıralandı.`;
+          return `Birleşim: <strong>${escapeHtml(nodeLabel(left))}</strong> + <strong>${escapeHtml(nodeLabel(right))}</strong> → <strong>${parent.freq}</strong>.`;
         }
-
-        return "Son adım: En üstte tek kök node kaldı. Huffman ağacı tamamlandı.";
+        return `Tamamlandı.`;
       }
 
-      function drawConstructionTable(state, step) {
-        const visibleRows = step.visibleRows;
-        const rows = state.rows.slice(0, visibleRows);
-        const maxNodes = Math.max(...rows.map((row) => row.length));
-        const gap = 114;
-        const sidePadding = 105;
-        const rowGap = 118;
-        const topPadding = 58;
-        const bottomPadding = 64;
-        const minWidth = Math.max(760, visualScrollEl.clientWidth - 8);
+      function formatHuffmanQueue(state, ids) {
+        return ids
+          .map(
+            (id) =>
+              `<span class="mono">${escapeHtml(nodeLabel(state.nodes.get(id)))}</span>`,
+          )
+          .join(" → ");
+      }
+
+      function createHuffmanVizCache() {
+        return {
+          metaLayer: null,
+          edgeLayer: null,
+          nodeLayer: null,
+          nodeGroups: new Map(),
+          edgePaths: new Map(),
+          bitLabels: new Map(),
+          lastPositions: new Map(),
+        };
+      }
+      function resetHuffmanSvg() {
+        svgEl.innerHTML = "";
+        huffmanViz = createHuffmanVizCache();
+        visualPlaceholderEl.style.display = "block";
+      }
+
+      function ensureHuffmanLayers() {
+        if (huffmanViz.metaLayer) return;
+        huffmanViz.metaLayer = makeSvg("g", { "aria-hidden": "true" });
+        huffmanViz.edgeLayer = makeSvg("g", { "aria-hidden": "true" });
+        huffmanViz.nodeLayer = makeSvg("g", { "aria-hidden": "true" });
+        svgEl.appendChild(huffmanViz.metaLayer);
+        svgEl.appendChild(huffmanViz.edgeLayer);
+        svgEl.appendChild(huffmanViz.nodeLayer);
+      }
+
+      function drawHuffmanAnimatedForest(state, step) {
+        ensureHuffmanLayers();
+        const roots = getConstructionRoots(state, step);
+        const selectedIds = new Set(step.selectedIds || []);
+        const newParentId = step.type === "merge" ? step.newParentId : null;
+        const leafTotal = roots.reduce((t, r) => t + countHuffmanLeaves(r), 0);
+        const leafGap = leafTotal <= 10 ? 126 : leafTotal <= 22 ? 108 : 92;
+        const forestGap = 78,
+          levelGap = 108,
+          sidePadding = 86,
+          topPadding = 130,
+          bottomPadding = 76;
+        const minWidth = Math.max(840, visualScrollEl.clientWidth - 8);
+        const layout = layoutHuffmanForest(roots, {
+          leafGap,
+          forestGap,
+          levelGap,
+          sidePadding,
+          topPadding,
+        });
+        const queueWidth = measureQueueWidth(roots);
         const width = Math.max(
           minWidth,
-          sidePadding * 2 + Math.max(0, maxNodes - 1) * gap + 120,
+          layout.rawWidth + sidePadding,
+          sidePadding * 2 + queueWidth,
         );
-        const height =
-          topPadding + bottomPadding + Math.max(0, visibleRows - 1) * rowGap;
-
+        const xOffset = Math.max(0, (width - layout.rawWidth) / 2);
+        layout.positions.forEach((pos) => {
+          pos.x += xOffset;
+        });
+        const height = Math.max(
+          455,
+          topPadding + bottomPadding + layout.maxDepth * levelGap,
+        );
         svgEl.setAttribute("width", width);
         svgEl.setAttribute("height", height);
         svgEl.setAttribute("viewBox", `0 0 ${width} ${height}`);
-        svgEl.innerHTML = "";
+        drawSvgMeta(roots, step, sidePadding, 28);
+        const visibleNodes = new Set(),
+          visibleEdges = new Set();
+        roots.forEach((root) =>
+          collectVisible(root, visibleNodes, visibleEdges),
+        );
+        huffmanViz.edgePaths.forEach((path, key) => {
+          if (!visibleEdges.has(key)) path.style.opacity = "0";
+        });
+        huffmanViz.bitLabels.forEach((label, key) => {
+          if (!visibleEdges.has(key)) label.style.opacity = "0";
+        });
+        visibleEdges.forEach((key) => {
+          const [parentId, childId, bit] = key.split("|");
+          const parent = state.nodes.get(parentId);
+          const child = state.nodes.get(childId);
+          const from = layout.positions.get(parentId);
+          const to = layout.positions.get(childId);
+          if (!parent || !child || !from || !to) return;
+          syncEdge(
+            key,
+            from,
+            to,
+            bit,
+            newParentId === parent.id && selectedIds.has(child.id),
+          );
+        });
+        huffmanViz.nodeGroups.forEach((group, id) => {
+          if (!visibleNodes.has(id)) {
+            group.style.opacity = "0";
+            group.style.pointerEvents = "none";
+          }
+        });
+        visibleNodes.forEach((id) => {
+          const node = state.nodes.get(id);
+          const pos = layout.positions.get(id);
+          if (!node || !pos) return;
+          syncNode(
+            node,
+            pos,
+            selectedIds.has(id),
+            newParentId === id,
+            step,
+            layout.positions,
+          );
+        });
+        huffmanViz.lastPositions = clonePositions(layout.positions);
+      }
 
+      function drawSvgMeta(roots, step, x, y) {
+        huffmanViz.metaLayer.innerHTML = "";
+        const title =
+          step.type === "select"
+            ? "Seçim"
+            : step.type === "merge"
+              ? "Birleştirme"
+              : step.type === "done"
+                ? "Tamamlandı"
+                : "Başlangıç";
+        appendSvgText(huffmanViz.metaLayer, x, y, title, "svg-title", "start");
+        appendSvgText(
+          huffmanViz.metaLayer,
+          x,
+          y + 34,
+          "Aktif:",
+          "svg-subtitle",
+          "start",
+        );
+        let cursor = x + 90;
+        roots.forEach((node) => {
+          const label = nodeLabel(node);
+          const w = Math.max(64, label.length * 8 + 24);
+          const rect = makeSvg("rect", {
+            x: cursor,
+            y: y + 18,
+            width: w,
+            height: 30,
+            rx: 2,
+            ry: 2,
+            class: "queue-pill-bg",
+          });
+          huffmanViz.metaLayer.appendChild(rect);
+          appendSvgText(
+            huffmanViz.metaLayer,
+            cursor + w / 2,
+            y + 34,
+            label,
+            "queue-pill-text",
+          );
+          cursor += w + 10;
+        });
+      }
+
+      function syncNode(
+        node,
+        pos,
+        isSelected,
+        isNewParent,
+        step,
+        currentPositions,
+      ) {
+        let group = huffmanViz.nodeGroups.get(node.id);
+        const isNew = !group;
+        if (!group) {
+          group = createNodeGroup(node);
+          huffmanViz.nodeGroups.set(node.id, group);
+          huffmanViz.nodeLayer.appendChild(group);
+          const start = getStartPositionForNode(
+            node,
+            pos,
+            step,
+            currentPositions,
+          );
+          group.style.transition = "none";
+          group.style.opacity = "0";
+          group.style.transform = `translate(${start.x}px, ${start.y}px)`;
+          group.getBoundingClientRect();
+          requestAnimationFrame(() => {
+            group.style.transition =
+              "transform 0.68s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.28s ease";
+            group.style.opacity = "1";
+            group.style.transform = `translate(${pos.x}px, ${pos.y}px)`;
+          });
+        } else {
+          group.style.opacity = "1";
+          group.style.pointerEvents = "auto";
+          group.style.transform = `translate(${pos.x}px, ${pos.y}px)`;
+        }
+        group.classList.toggle("selected", isSelected);
+        group.classList.toggle("new-parent", isNewParent);
+        if (isNew && isNewParent)
+          setTimeout(() => group.classList.remove("new-parent"), 750);
+      }
+
+      function getStartPositionForNode(node, target, step, currentPositions) {
+        const previous = huffmanViz.lastPositions.get(node.id);
+        if (previous) return previous;
+        if (step && step.type === "merge" && step.newParentId === node.id) {
+          const selected = step.selectedIds || [];
+          const a = selected[0]
+            ? huffmanViz.lastPositions.get(selected[0]) ||
+              currentPositions.get(selected[0])
+            : null;
+          const b = selected[1]
+            ? huffmanViz.lastPositions.get(selected[1]) ||
+              currentPositions.get(selected[1])
+            : null;
+          if (a && b) return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+        }
+        return target;
+      }
+
+      function createNodeGroup(node) {
+        const main =
+          node.char === null ? String(node.freq) : displayChar(node.char);
+        const sub = node.char === null ? "toplam" : `f=${node.freq}`;
+        const width = Math.max(76, Math.min(150, main.length * 12 + 34));
+        const height = 56;
+        const group = makeSvg("g", { class: "h-node" });
+        const rectClass =
+          node.char === null ? "node-rect internal" : "node-rect";
+        group.appendChild(
+          makeSvg("rect", {
+            x: -width / 2,
+            y: -height / 2,
+            width,
+            height,
+            rx: 4,
+            ry: 4,
+            class: rectClass,
+          }),
+        );
+        appendSvgText(group, 0, -8, main, "node-text");
+        appendSvgText(group, 0, 13, sub, "node-text node-text-small");
+        const title = makeSvg("title");
+        title.textContent =
+          node.char === null
+            ? `Toplam frekans: ${node.freq}`
+            : `Karakter: ${displayChar(node.char)}; frekans: ${node.freq}`;
+        group.appendChild(title);
+        return group;
+      }
+
+      function syncEdge(key, from, to, bit, isActive) {
+        let path = huffmanViz.edgePaths.get(key);
+        let label = huffmanViz.bitLabels.get(key);
+        if (!path) {
+          path = makeSvg("path", { class: "h-edge" });
+          huffmanViz.edgePaths.set(key, path);
+          huffmanViz.edgeLayer.appendChild(path);
+        }
+        if (!label) {
+          label = makeSvg("text", { class: "bit-label" });
+          label.textContent = bit;
+          label.style.transition = "opacity 0.28s ease";
+          huffmanViz.bitLabels.set(key, label);
+          huffmanViz.edgeLayer.appendChild(label);
+        }
+        const midY = (from.y + to.y) / 2;
+        path.setAttribute(
+          "d",
+          `M ${from.x} ${from.y + 28} C ${from.x} ${midY} ${to.x} ${midY} ${to.x} ${to.y - 28}`,
+        );
+        path.classList.toggle("active", isActive);
+        path.style.opacity = "1";
+        label.setAttribute(
+          "x",
+          from.x * 0.58 + to.x * 0.42 + (bit === "0" ? -10 : 10),
+        );
+        label.setAttribute("y", from.y * 0.58 + to.y * 0.42);
+        label.style.opacity = "1";
+      }
+
+      function collectVisible(node, visibleNodes, visibleEdges) {
+        if (!node) return;
+        visibleNodes.add(node.id);
+        if (node.left) {
+          visibleEdges.add(`${node.id}|${node.left.id}|0`);
+          collectVisible(node.left, visibleNodes, visibleEdges);
+        }
+        if (node.right) {
+          visibleEdges.add(`${node.id}|${node.right.id}|1`);
+          collectVisible(node.right, visibleNodes, visibleEdges);
+        }
+      }
+
+      function getConstructionRoots(state, step) {
+        if (step.type === "initial") return state.rows[0];
+        if (step.type === "select")
+          return state.rows[state.operations[step.operationIndex].rowBefore];
+        if (step.type === "merge")
+          return state.rows[state.operations[step.operationIndex].rowAfter];
+        return state.rows[state.rows.length - 1];
+      }
+
+      function layoutHuffmanForest(roots, config) {
         const positions = new Map();
-        rows.forEach((row, rowIndex) => {
-          const y = topPadding + (visibleRows - 1 - rowIndex) * rowGap;
-          const rowWidth = Math.max(0, row.length - 1) * gap;
-          const startX = width / 2 - rowWidth / 2;
-          row.forEach((node, nodeIndex) => {
-            const x = startX + nodeIndex * gap;
-            positions.set(positionKey(rowIndex, node.id), { x, y });
-          });
+        let cursorX = config.sidePadding,
+          maxDepth = 0;
+        roots.forEach((root, index) => {
+          const leafCount = Math.max(1, countHuffmanLeaves(root));
+          const subtreeWidth = Math.max(
+            config.leafGap,
+            leafCount * config.leafGap,
+          );
+          const nextLeaf = { value: 0 };
+          layoutHuffmanSubtree(root, 0, cursorX, nextLeaf, config, positions);
+          maxDepth = Math.max(maxDepth, huffmanDepth(root));
+          cursorX +=
+            subtreeWidth + (index === roots.length - 1 ? 0 : config.forestGap);
         });
-
-        drawCarryLines(state, visibleRows, positions);
-        drawMergeLines(state, visibleRows, positions, step);
-        drawRows(state, rows, visibleRows, positions, step, width);
+        return {
+          positions,
+          maxDepth,
+          rawWidth: Math.max(
+            config.sidePadding * 2,
+            cursorX + config.sidePadding,
+          ),
+        };
       }
 
-      function drawCarryLines(state, visibleRows, positions) {
-        for (let rowIndex = 1; rowIndex < visibleRows; rowIndex++) {
-          const prevIds = new Set(
-            state.rows[rowIndex - 1].map((node) => node.id),
-          );
-          state.rows[rowIndex].forEach((node) => {
-            if (!prevIds.has(node.id)) return;
-            const from = positions.get(positionKey(rowIndex, node.id));
-            const to = positions.get(positionKey(rowIndex - 1, node.id));
-            if (!from || !to) return;
-            appendLine(from.x, from.y + 25, to.x, to.y - 25, "carry-line");
-          });
+      function layoutHuffmanSubtree(
+        node,
+        depth,
+        startX,
+        nextLeaf,
+        config,
+        positions,
+      ) {
+        const y = config.topPadding + depth * config.levelGap;
+        if (!node.left && !node.right) {
+          const x = startX + nextLeaf.value * config.leafGap;
+          positions.set(node.id, { x, y, depth });
+          nextLeaf.value++;
+          return x;
         }
-      }
-
-      function drawMergeLines(state, visibleRows, positions, step) {
-        state.operations.forEach((op, index) => {
-          if (op.rowAfter >= visibleRows) return;
-          const parent = positions.get(positionKey(op.rowAfter, op.parentId));
-          const left = positions.get(positionKey(op.rowBefore, op.leftId));
-          const right = positions.get(positionKey(op.rowBefore, op.rightId));
-          if (!parent || !left || !right) return;
-
-          const isActive =
-            step.type === "merge" && step.operationIndex === index;
-          appendLine(
-            parent.x,
-            parent.y + 25,
-            left.x,
-            left.y - 25,
-            isActive ? "merge-line active" : "merge-line",
-          );
-          appendLine(
-            parent.x,
-            parent.y + 25,
-            right.x,
-            right.y - 25,
-            isActive ? "merge-line active" : "merge-line",
-          );
-          appendText(
-            (parent.x + left.x) / 2 - 12,
-            (parent.y + left.y) / 2 - 4,
-            "0",
-            "bit-label",
-          );
-          appendText(
-            (parent.x + right.x) / 2 + 10,
-            (parent.y + right.y) / 2 - 4,
-            "1",
-            "bit-label",
-          );
-        });
-      }
-
-      function drawRows(state, rows, visibleRows, positions, step, width) {
-        rows.forEach((row, rowIndex) => {
-          const y = topPaddingForRow(visibleRows, rowIndex);
-          appendText(24, y + 5, `Satır ${rowIndex + 1}`, "row-label", "start");
-          row.forEach((node) => {
-            const pos = positions.get(positionKey(rowIndex, node.id));
-            if (!pos) return;
-            const isSelected =
-              step.selectedRow === rowIndex &&
-              step.selectedIds &&
-              step.selectedIds.includes(node.id);
-            const isNewParent =
-              step.type === "merge" && step.newParentId === node.id;
-            appendNode(pos.x, pos.y, node, isSelected, isNewParent);
-          });
-        });
-
-        function topPaddingForRow(totalRows, rowIndex) {
-          const rowGap = 118;
-          const topPadding = 58;
-          return topPadding + (totalRows - 1 - rowIndex) * rowGap;
-        }
-      }
-
-      function appendNode(cx, cy, node, isSelected, isNewParent) {
-        const width = node.char === null ? 70 : 82;
-        const height = 50;
-        const rect = document.createElementNS(
-          "http://www.w3.org/2000/svg",
-          "rect",
+        const leftX = layoutHuffmanSubtree(
+          node.left,
+          depth + 1,
+          startX,
+          nextLeaf,
+          config,
+          positions,
         );
-        rect.setAttribute("x", cx - width / 2);
-        rect.setAttribute("y", cy - height / 2);
-        rect.setAttribute("width", width);
-        rect.setAttribute("height", height);
-        rect.setAttribute("rx", 14);
-        rect.setAttribute("ry", 14);
-        let className = "node-rect";
-        if (node.char === null) className += " internal";
-        if (isSelected) className += " selected";
-        if (isNewParent) className += " new-parent";
-        rect.setAttribute("class", className);
-        svgEl.appendChild(rect);
-
-        appendText(cx, cy + 1, nodeLabel(node), "node-text");
-      }
-
-      function appendLine(x1, y1, x2, y2, className) {
-        const line = document.createElementNS(
-          "http://www.w3.org/2000/svg",
-          "line",
+        const rightX = layoutHuffmanSubtree(
+          node.right,
+          depth + 1,
+          startX,
+          nextLeaf,
+          config,
+          positions,
         );
-        line.setAttribute("x1", x1);
-        line.setAttribute("y1", y1);
-        line.setAttribute("x2", x2);
-        line.setAttribute("y2", y2);
-        line.setAttribute("class", className);
-        svgEl.appendChild(line);
+        const x = (leftX + rightX) / 2;
+        positions.set(node.id, { x, y, depth });
+        return x;
       }
 
-      function appendText(x, y, text, className, anchor = "middle") {
-        const node = document.createElementNS(
-          "http://www.w3.org/2000/svg",
-          "text",
+      function clonePositions(positions) {
+        const clone = new Map();
+        positions.forEach((pos, id) => clone.set(id, { ...pos }));
+        return clone;
+      }
+      function countHuffmanLeaves(node) {
+        if (!node) return 0;
+        if (!node.left && !node.right) return 1;
+        return countHuffmanLeaves(node.left) + countHuffmanLeaves(node.right);
+      }
+      function huffmanDepth(node) {
+        if (!node || (!node.left && !node.right)) return 0;
+        return 1 + Math.max(huffmanDepth(node.left), huffmanDepth(node.right));
+      }
+      function measureQueueWidth(roots) {
+        return (
+          90 +
+          roots.reduce((sum, node) => {
+            const label = nodeLabel(node);
+            return sum + Math.max(64, label.length * 8 + 24) + 10;
+          }, 0)
         );
-        node.setAttribute("x", x);
-        node.setAttribute("y", y);
-        node.setAttribute("class", className);
-        node.setAttribute("text-anchor", anchor);
-        node.textContent = text;
-        svgEl.appendChild(node);
       }
 
-      function positionKey(rowIndex, nodeId) {
-        return rowIndex + "_" + nodeId;
-      }
-
-      function renderSummary(state) {
+      function renderHuffmanSummary(state) {
         const savedText = state.savedBits >= 0 ? "Tasarruf" : "Ek Bit";
         const savedValue = Math.abs(state.savedBits);
         const savedPercent = Math.abs(state.savingPercent).toFixed(1);
-        summaryOutputEl.innerHTML = `
-          <div class="summary-card">
-            <div class="summary-title">Normal</div>
-            <div class="summary-value">${state.normalBits} bit</div>
-          </div>
-          <div class="summary-card">
-            <div class="summary-title">Huffman</div>
-            <div class="summary-value">${state.huffmanBits} bit</div>
-          </div>
-          <div class="summary-card">
-            <div class="summary-title">${savedText}</div>
-            <div class="summary-value">${savedValue} bit</div>
-          </div>
-          <div class="summary-card">
-            <div class="summary-title">Huffman / Normal</div>
-            <div class="summary-value">%${state.ratio.toFixed(1)}</div>
-          </div>
+        huffmanSummaryOutputEl.innerHTML = `
+          <div class="summary-card"><div class="summary-title">Normal</div><div class="summary-value">${state.normalBits} bit</div><div class="summary-sub">8 bit × ${state.chars.length} karakter</div></div>
+          <div class="summary-card best"><div class="summary-title">Huffman</div><div class="summary-value">${state.huffmanBits} bit</div><div class="summary-sub">Ort. ${state.averageCodeLength.toFixed(2)} bit/karakter</div></div>
+          <div class="summary-card"><div class="summary-title">${savedText}</div><div class="summary-value">${savedValue} bit</div><div class="summary-sub">%${savedPercent}</div></div>
+          <div class="summary-card ${state.decodeMatches && state.prefixFree ? "best" : "warn"}"><div class="summary-title">Doğrulama</div><div class="summary-value">${state.decodeMatches && state.prefixFree ? "✓ Geçti" : "Kontrol"}</div><div class="summary-sub">Prefix-free + encode/decode</div></div>
+        `;
+        const previewLimit = 460;
+        const preview =
+          state.encodedBits.length > previewLimit
+            ? state.encodedBits.slice(0, previewLimit) + "..."
+            : state.encodedBits;
+        huffmanBitstreamOutputEl.innerHTML = `
+          <span class="label">Kodlanan bit dizisi (${state.encodedBits.length} bit)</span>
+          <span class="mono">${escapeHtml(preview || "∅")}</span>
+          ${state.encodedBits.length > previewLimit ? `` : ""}
         `;
       }
 
-      function renderCodeTable(state) {
+      function renderHuffmanCodeTable(state) {
         const rows = Array.from(state.freqMap.keys()).sort((a, b) => {
-          const codeA = state.codes.get(a);
-          const codeB = state.codes.get(b);
+          const codeA = state.codes.get(a),
+            codeB = state.codes.get(b);
           if (codeA.length !== codeB.length) return codeA.length - codeB.length;
           const freqDiff = state.freqMap.get(b) - state.freqMap.get(a);
           if (freqDiff !== 0) return freqDiff;
           return displayChar(a).localeCompare(displayChar(b), "tr");
         });
-
-        let html = `
-          <table class="huffman-table">
-            <thead>
-              <tr>
-                <th>Karakter</th>
-                <th>Huffman Kodu</th>
-                <th>Kod Uzunluğu</th>
-                <th>Toplam Huffman Biti</th>
-              </tr>
-            </thead>
-            <tbody>
-        `;
-
+        let html = `<table class="data-table"><thead><tr><th>Karakter</th><th>Frekans</th><th>Huffman Kodu</th><th>Kod Uzunluğu</th><th>Toplam Bit</th></tr></thead><tbody>`;
         rows.forEach((ch) => {
-          const code = state.codes.get(ch);
-          const count = state.freqMap.get(ch);
-          const totalBits = count * code.length;
-          html += `
-            <tr>
-              <td><strong>${escapeHtml(tableChar(ch))}</strong></td>
-              <td class="code-cell">${escapeHtml(code)}</td>
-              <td>${code.length} bit</td>
-              <td>${count} × ${code.length} = <strong>${totalBits} bit</strong></td>
-            </tr>
-          `;
+          const code = state.codes.get(ch),
+            count = state.freqMap.get(ch),
+            totalBits = count * code.length;
+          html += `<tr><td><strong>${escapeHtml(tableChar(ch))}</strong></td><td>${count}</td><td class="mono">${escapeHtml(code)}</td><td>${code.length} bit</td><td>${count} × ${code.length} = <strong>${totalBits} bit</strong></td></tr>`;
         });
-
         html += "</tbody></table>";
         huffmanOutputEl.innerHTML = html;
+      }
+
+      function decodeHuffmanBits(bits, root, expectedCharCount = null) {
+        if (!root) return "";
+        if (root.char !== null) {
+          const count =
+            expectedCharCount === null
+              ? Array.from(bits).length
+              : expectedCharCount;
+          return Array(count).fill(root.char).join("");
+        }
+        let decoded = "",
+          current = root;
+        for (const bit of bits) {
+          current = bit === "0" ? current.left : current.right;
+          if (!current) return decoded;
+          if (current.char !== null) {
+            decoded += current.char;
+            current = root;
+          }
+        }
+        return decoded;
+      }
+
+      function isPrefixFree(codes) {
+        const values = Array.from(codes.values());
+        for (let i = 0; i < values.length; i++)
+          for (let j = 0; j < values.length; j++) {
+            if (i === j) continue;
+            if (values[j].startsWith(values[i])) return false;
+          }
+        return true;
+      }
+
+      function buildLzwModel(text) {
+        const chars = Array.from(text);
+        const initialSymbols = Array.from(new Set(chars)).sort((a, b) =>
+          displayChar(a).localeCompare(displayChar(b), "tr"),
+        );
+        const dictionary = new Map();
+        initialSymbols.forEach((symbol, index) =>
+          dictionary.set(symbol, index),
+        );
+        let nextCode = initialSymbols.length,
+          w = "";
+        const outputCodes = [],
+          emissions = [],
+          additions = [];
+        const steps = [
+          {
+            type: "initial",
+            readIndex: null,
+            beforeW: "",
+            k: "",
+            wk: "",
+            currentW: "",
+            emitted: null,
+            added: null,
+            emissions: [],
+            dictionaryEntries: snapshotStringDictionary(dictionary),
+            action: "Başlangıç sözlüğü oluşturuldu.",
+          },
+        ];
+        chars.forEach((k, index) => {
+          const beforeW = w,
+            wk = w + k;
+          if (dictionary.has(wk)) {
+            w = wk;
+            steps.push({
+              type: "match",
+              readIndex: index,
+              beforeW,
+              k,
+              wk,
+              currentW: w,
+              emitted: null,
+              added: null,
+              emissions: emissions.map((e) => ({ ...e })),
+              dictionaryEntries: snapshotStringDictionary(dictionary),
+              action: `<strong>${escapeHtml(phraseLabel(wk))}</strong> var → <strong>w = ${escapeHtml(phraseLabel(w))}</strong>.`,
+            });
+          } else {
+            const outputCode = dictionary.get(w),
+              widthAtEmit = bitsNeeded(nextCode);
+            const emitted = { phrase: w, code: outputCode, width: widthAtEmit };
+            outputCodes.push(outputCode);
+            emissions.push(emitted);
+            const added = { phrase: wk, code: nextCode, from: w, nextChar: k };
+            dictionary.set(wk, nextCode);
+            additions.push(added);
+            nextCode++;
+            w = k;
+            steps.push({
+              type: "add",
+              readIndex: index,
+              beforeW,
+              k,
+              wk,
+              currentW: w,
+              emitted,
+              added,
+              emissions: emissions.map((e) => ({ ...e })),
+              dictionaryEntries: snapshotStringDictionary(dictionary),
+              action: `<strong>${escapeHtml(phraseLabel(wk))}</strong> yok → çıktı <strong>${escapeHtml(phraseLabel(beforeW))}</strong>, ekle <strong>${escapeHtml(phraseLabel(wk))}</strong>.`,
+            });
+          }
+        });
+        if (w !== "") {
+          const outputCode = dictionary.get(w),
+            widthAtEmit = bitsNeeded(nextCode);
+          const emitted = { phrase: w, code: outputCode, width: widthAtEmit };
+          outputCodes.push(outputCode);
+          emissions.push(emitted);
+          steps.push({
+            type: "flush",
+            readIndex: chars.length,
+            beforeW: w,
+            k: "",
+            wk: w,
+            currentW: "",
+            emitted,
+            added: null,
+            emissions: emissions.map((e) => ({ ...e })),
+            dictionaryEntries: snapshotStringDictionary(dictionary),
+            action: `Son çıktı: <strong>${outputCode}</strong>.`,
+          });
+        }
+        const finalDictionary = snapshotStringDictionary(dictionary);
+        const normalBits = chars.length * 8,
+          fixedCodeWidth = bitsNeeded(finalDictionary.length),
+          lzwBitsFixed = outputCodes.length * fixedCodeWidth;
+        const lzwBitsDynamic = emissions.reduce((t, e) => t + e.width, 0);
+        const savedBits = normalBits - lzwBitsFixed,
+          ratio = normalBits === 0 ? 0 : (lzwBitsFixed / normalBits) * 100;
+        const savingPercent =
+          normalBits === 0 ? 0 : (savedBits / normalBits) * 100;
+        const decoded = decodeLzw(outputCodes, initialSymbols, text);
+        return {
+          text,
+          chars,
+          uniqueCount: initialSymbols.length,
+          initialSymbols,
+          finalDictionary,
+          additions,
+          steps,
+          outputCodes,
+          emissions,
+          decoded,
+          normalBits,
+          fixedCodeWidth,
+          lzwBitsFixed,
+          lzwBitsDynamic,
+          savedBits,
+          ratio,
+          savingPercent,
+        };
+      }
+
+      function renderLzwCurrentStep() {
+        if (!lzwState) return;
+        const step = lzwState.steps[lzwCurrentStep];
+        lzwStepCounterEl.textContent = `${lzwCurrentStep} / ${lzwState.steps.length - 1}`;
+        lzwStepNoteEl.innerHTML = step.action;
+        lzwReadPosEl.textContent =
+          step.readIndex === null
+            ? "Başlangıç"
+            : step.type === "flush"
+              ? "Son çıktı"
+              : `${step.readIndex + 1} / ${lzwState.chars.length}`;
+        lzwBeforeWEl.textContent = phraseLabel(step.beforeW);
+        lzwKEl.textContent = phraseLabel(step.k);
+        lzwWkEl.textContent = phraseLabel(step.wk);
+        lzwCurrentWEl.textContent = phraseLabel(step.currentW);
+        lzwDecisionEl.className = "lzw-decision";
+        if (step.type === "match") {
+          lzwDecisionEl.classList.add("match");
+          lzwDecisionEl.innerHTML = "Bulundu.";
+        } else if (step.type === "add") {
+          lzwDecisionEl.classList.add("add");
+          lzwDecisionEl.innerHTML = `Çıktı: <strong>${step.emitted.code}</strong>; ekle: <strong>${escapeHtml(phraseLabel(step.added.phrase))} → ${step.added.code}</strong>.`;
+        } else if (step.type === "flush") {
+          lzwDecisionEl.classList.add("flush");
+          lzwDecisionEl.innerHTML = `Son çıktı: <strong>${step.emitted.code}</strong>.`;
+        } else lzwDecisionEl.innerHTML = "Hazır.";
+        renderLzwOutputStrip(step.emissions);
+        renderLzwCurrentDictionary(
+          step.dictionaryEntries,
+          step.added,
+          step.emitted,
+        );
+        updateControlStates();
+      }
+
+      function renderLzwOutputStrip(emissions) {
+        if (!emissions || emissions.length === 0) {
+          lzwOutputStripEl.innerHTML = '<span class="placeholder">—</span>';
+          return;
+        }
+        lzwOutputStripEl.innerHTML = emissions
+          .map(
+            (item) =>
+              `<span class="code-pill">${item.code}<small>${escapeHtml(phraseLabel(item.phrase))} / ${item.width}bit</small></span>`,
+          )
+          .join("");
+      }
+
+      function renderLzwCurrentDictionary(entries, added, emitted) {
+        const addedCode = added ? added.code : null,
+          emittedCode = emitted ? emitted.code : null;
+        let html = `<table class="data-table"><thead><tr><th>Kod</th><th>Sözlük İfadesi</th><th>Durum</th></tr></thead><tbody>`;
+        entries.forEach((entry) => {
+          const isNew = entry.code === addedCode,
+            isUsed = entry.code === emittedCode;
+          const rowClass = isNew ? "new-row" : isUsed ? "used-row" : "";
+          let status = "Mevcut";
+          if (isNew) status = "Yeni eklendi";
+          else if (isUsed) status = "Çıktıya yazıldı";
+          html += `<tr class="${rowClass}"><td class="mono">${entry.code}</td><td class="mono">${escapeHtml(phraseLabel(entry.phrase))}</td><td>${status}</td></tr>`;
+        });
+        html += "</tbody></table>";
+        lzwCurrentDictionaryEl.innerHTML = html;
+      }
+
+      function renderLzwSummary(state) {
+        const savedText = state.savedBits >= 0 ? "Tasarruf" : "Ek Bit";
+        const savedValue = Math.abs(state.savedBits),
+          savedPercent = Math.abs(state.savingPercent).toFixed(1);
+        lzwSummaryOutputEl.innerHTML = `
+          <div class="summary-card"><div class="summary-title">Normal</div><div class="summary-value">${state.normalBits} bit</div><div class="summary-sub">8 bit × ${state.chars.length} karakter</div></div>
+          <div class="summary-card"><div class="summary-title">Çıktı Kodu</div><div class="summary-value">${state.outputCodes.length}</div><div class="summary-sub">${escapeHtml(state.outputCodes.join(", "))}</div></div>
+          <div class="summary-card"><div class="summary-title">Final Sözlük</div><div class="summary-value">${state.finalDictionary.length}</div><div class="summary-sub">${state.fixedCodeWidth} bit ile adreslenir</div></div>
+          <div class="summary-card best"><div class="summary-title">LZW Sabit</div><div class="summary-value">${state.lzwBitsFixed} bit</div><div class="summary-sub">${state.outputCodes.length} × ${state.fixedCodeWidth}</div></div>
+          <div class="summary-card"><div class="summary-title">${savedText}</div><div class="summary-value">${savedValue} bit</div><div class="summary-sub">%${savedPercent}</div></div>
+          <div class="summary-card"><div class="summary-title">Anlık Genişlik</div><div class="summary-value">${state.lzwBitsDynamic} bit</div><div class="summary-sub">Teorik toplam</div></div>
+        `;
+        lzwDecodeStatusEl.innerHTML = `<span class="status-pill ${state.decoded.success ? "ok" : "warn"}">${state.decoded.success ? "✓ Doğrulandı" : "Kontrol"}</span>`;
+      }
+
+      function renderLzwStepTable(state) {
+        let html = `<table class="data-table"><thead><tr><th>Adım</th><th>Önceki w</th><th>Okunan k</th><th>Kontrol w+k</th><th>Karar</th><th>Çıktı</th><th>Sözlüğe Eklenen</th><th>Sonraki w</th></tr></thead><tbody>`;
+        state.steps.forEach((step, index) => {
+          const outputText = step.emitted
+            ? `${phraseLabel(step.emitted.phrase)} → ${step.emitted.code}`
+            : "-";
+          const addedText = step.added
+            ? `${phraseLabel(step.added.phrase)} → ${step.added.code}`
+            : "-";
+          html += `<tr><td>${index}</td><td class="mono">${escapeHtml(phraseLabel(step.beforeW))}</td><td class="mono">${escapeHtml(phraseLabel(step.k))}</td><td class="mono">${escapeHtml(phraseLabel(step.wk))}</td><td>${escapeHtml(buildLzwDecisionText(step))}</td><td class="mono">${escapeHtml(outputText)}</td><td class="mono">${escapeHtml(addedText)}</td><td class="mono">${escapeHtml(phraseLabel(step.currentW))}</td></tr>`;
+        });
+        html += "</tbody></table>";
+        lzwStepsOutputEl.innerHTML = html;
+      }
+
+      function buildLzwDecisionText(step) {
+        if (step.type === "initial") return "Başlangıç";
+        if (step.type === "match") return "Var";
+        if (step.type === "add") return "Yok";
+        if (step.type === "flush") return "Son";
+        return "-";
+      }
+
+      function renderLzwDictionaryTable(state) {
+        const initialCodes = new Set(state.initialSymbols.map((_, i) => i));
+        let html = `<table class="data-table"><thead><tr><th>Kod</th><th>İfade</th><th>Kaynak</th></tr></thead><tbody>`;
+        state.finalDictionary.forEach((entry) => {
+          const isInitial = initialCodes.has(entry.code);
+          const addition = state.additions.find((a) => a.code === entry.code);
+          const source = isInitial
+            ? "İlk"
+            : addition
+              ? `${phraseLabel(addition.from)} + ${phraseLabel(addition.nextChar)}`
+              : "Yeni";
+          html += `<tr class="${isInitial ? "" : "new-row"}"><td class="mono">${entry.code}</td><td class="mono">${escapeHtml(phraseLabel(entry.phrase))}</td><td>${escapeHtml(source)}</td></tr>`;
+        });
+        html += "</tbody></table>";
+        lzwDictionaryOutputEl.innerHTML = html;
+      }
+
+      function decodeLzw(codes, initialSymbols, originalText) {
+        const dictionary = new Map();
+        initialSymbols.forEach((symbol, index) =>
+          dictionary.set(index, symbol),
+        );
+        let nextCode = initialSymbols.length,
+          decodedText = "";
+        if (codes.length === 0)
+          return { text: "", success: originalText === "" };
+        const firstCode = codes[0];
+        let w = dictionary.get(firstCode);
+        decodedText = w || "";
+        for (let i = 1; i < codes.length; i++) {
+          const code = codes[i];
+          let entry = "";
+          if (dictionary.has(code)) entry = dictionary.get(code);
+          else if (code === nextCode) entry = w + firstSymbolOf(w);
+          else break;
+          dictionary.set(nextCode, w + firstSymbolOf(entry));
+          nextCode++;
+          decodedText += entry;
+          w = entry;
+        }
+        return { text: decodedText, success: decodedText === originalText };
+      }
+
+      function snapshotStringDictionary(dictionary) {
+        return Array.from(dictionary.entries())
+          .map(([phrase, code]) => ({ phrase, code }))
+          .sort((a, b) => a.code - b.code);
+      }
+      function bitsNeeded(dictionarySize) {
+        return Math.max(1, Math.ceil(Math.log2(Math.max(2, dictionarySize))));
+      }
+
+      function makeSvg(name, attrs = {}) {
+        const node = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          name,
+        );
+        Object.entries(attrs).forEach(([key, value]) =>
+          node.setAttribute(key, value),
+        );
+        return node;
+      }
+
+      function appendSvgText(parent, x, y, text, className, anchor = "middle") {
+        const node = makeSvg("text", {
+          x,
+          y,
+          class: className,
+          "text-anchor": anchor,
+        });
+        node.textContent = text;
+        parent.appendChild(node);
+        return node;
       }
 
       function nodeLabel(node) {
         if (node.char === null) return String(node.freq);
         return `${displayChar(node.char)}:${node.freq}`;
       }
-
       function displayChar(ch) {
         if (ch === " ") return "␠";
         if (ch === "\n") return "↵";
         if (ch === "\t") return "⇥";
         return ch;
       }
-
       function tableChar(ch) {
         if (ch === " ") return "Boşluk";
         if (ch === "\n") return "Satır sonu";
         if (ch === "\t") return "Sekme";
         return ch;
       }
-
+      function phraseLabel(value) {
+        if (value === null || value === undefined || value === "") return "∅";
+        return Array.from(String(value)).map(displayChar).join("");
+      }
+      function firstSymbolOf(value) {
+        return Array.from(value || "")[0] || "";
+      }
       function escapeHtml(value) {
         return String(value)
           .replace(/&/g, "&amp;")
